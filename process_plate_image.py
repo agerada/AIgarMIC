@@ -22,9 +22,15 @@ def split_by_grid(image, nrow = 8):
     grid_contours = []
     for c in cnts:
         area = cv2.contourArea(c)
-        if area > 20000 and area < 30000: 
+        if area > 1000: 
+        #if area > 20000 and area < 30000: 
             grid_contours.append(c)
-            cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
+            #cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
+
+    # sort contours and remove biggest (outer) grid square
+    grid_contours = sorted(grid_contours, key=cv2.contourArea)
+    grid_contours = grid_contours[:-1]
+
     # Check that we found 96 boxes 
     if len(grid_contours) != 96: 
         raise(ValueError)
