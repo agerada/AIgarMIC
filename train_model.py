@@ -150,41 +150,7 @@ def main():
                 if not os.path.exists(args.save): 
                     os.mkdir(args.save)
                 model.save(args.save)
+                print(f"Model saved to {args.save}")
                 
-    # preprocessing to convert to tensorflow/keras
-    annotation_data = keras.utils.to_categorical(annotation_data)
-
-    # resize
-    image_data = [cv2.resize(i, (160, 160)) for i in image_data]
-    # convert from BGR to RGB
-    image_data = [cv2.cvtColor(i, cv2.COLOR_BGR2RGB) for i in image_data]
-    image_data = [i.reshape(1, 160, 160, 3) for i in image_data]
-    image_data = [i.astype(np.float32) for i in image_data]
-
-    dataset_tf = tf.data.Dataset.from_tensor_slices((image_data, annotation_data))
-    data_n = len(dataset_tf)
-    dataset_tf = dataset_tf.shuffle(data_n + 1)
-
-    train_dataset = dataset_tf.take(round(data_n * TRAIN_SPLIT))
-    test_dataset = dataset_tf.skip(round(data_n * TRAIN_SPLIT))
-    for i,j in train_dataset: 
-        print(j)
-    
-    model = Sequential([
-
-    ])
-
-    model.compile(optimizer='adam',
-              loss=tf.keras.losses.CategoricalCrossentropy,
-              metrics=['accuracy'])
-
-    #print(model.summary())
-
-    epochs = 10
-    history = model.fit(
-        train_dataset, 
-        validation_data=test_dataset, 
-        epochs=epochs
-    )
 if __name__ == "__main__": 
     main()
