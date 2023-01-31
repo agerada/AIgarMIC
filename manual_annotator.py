@@ -30,7 +30,7 @@ def main():
     OUTPUT_DIR = "annotations/"
     parser = argparse.ArgumentParser(description="Manually annotate plate images")
     parser.add_argument('directory', type=str, help="Directory containing plate images")
-    parser.add_argument('-o', '--output_to_files', action='store_true')
+    parser.add_argument('-o', '--output_to_files', action='store_true', help="Output to .jpg files in subfolders in annotations/    If not used, then defaults to storing in .p pickle files (NOT IMPLEMENTED)  [ default FALSE ]")
     args = parser.parse_args()
 
     codes = {48: 0, 49: 1, 50: 2, 27: "esc"}
