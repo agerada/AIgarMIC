@@ -45,7 +45,13 @@ In order to generate manually annotated images, use (IMP: -o MUST be used):
       -h, --help            show this help message and exit
       -o, --output_to_files
             Output to .jpg files in subfolders in annotations/ If not used, then defaults to storing in .p pickle files (NOT IMPLEMENTED) [ default FALSE ]
-    
+
+The following scoring codes are used throughout the project: 
+
+* `0`: no growth
+* `1`: faint film of growth or isolated colony
+* `2`: good growth
+
 ### Model training
 
 Use tensorflow to train image model. This script uses annotated images from `annotations/`. Suggest storing models in `models/` for ease of use in `main.py`. 
