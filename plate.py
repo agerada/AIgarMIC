@@ -13,6 +13,9 @@ from dataclasses import dataclass
 from typing import Optional
 import cv2
 from random import choice, randrange
+from utils import convertCV2toKeras
+import tensorflow as tf
+import numpy as np
 
 @dataclass(order=True)
 class Plate: 
@@ -43,3 +46,58 @@ class Plate:
         j = randrange(self.ncol)
         code = self.drug + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
         return self.image_matrix[i][j],code
+
+    def link_model(self, model, key): 
+        self.model = model
+        self.key = key
+
+    def annotate_images(self, model=None, key=None): 
+        if not self.image_matrix: 
+            raise LookupError(
+                """
+                Unable to find an image_matrix associated with this plate. 
+                Please provide an image path on construction or use import_image and split_images()
+                """)
+        model = self.model if not model else model 
+        if not model: 
+            raise LookupError(
+                """
+                Unable to find an image model for predictions associated with this plate. 
+                Please provide one or use link_model(). 
+                """
+            )
+        key = self.key if not key else key
+        if not key: 
+            raise LookupError(
+                """
+                Unable to find an interpretation key to convert scores to label. Please provide one
+                or use link_model(). 
+                """
+            )
+        self.predictions_matrix = []
+        self.score_matrix = []
+        self.growth_matrix = []
+        self.accuracy_matrix = []
+        temp_score_row = []
+        temp_predictions_row = []
+        temp_growth_rows = []
+        temp_accuracy_row = []
+        for row in self.image_matrix: 
+            for image in row: 
+                prediction = self.model.predict(convertCV2toKeras(image)) 
+                temp_predictions_row.append(prediction)
+                score = tf.nn.softmax(prediction)
+                temp_score_row.append(score)
+                growth = self.key[np.argmax(score)]
+                temp_growth_rows.append(growth)
+                accuracy = np.max(score)
+                temp_accuracy_row.append(accuracy)
+            self.predictions_matrix.append(temp_predictions_row)
+            self.score_matrix.append(temp_score_row)
+            self.growth_matrix.append(temp_growth_rows)
+            self.accuracy_matrix.append(temp_accuracy_row)
+            temp_score_row = []
+            temp_predictions_row = []
+            temp_growth_rows = []
+            temp_accuracy_row = []
+        return self.growth_matrix

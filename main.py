@@ -39,7 +39,8 @@ def main():
 
     if args.model: 
         model = tf.keras.models.load_model(args.model)
-
+        
+        """
         random_images = []
         predictions = []
         scores = []
@@ -55,6 +56,12 @@ def main():
             print(f"This image was predicted as: {class_names[np.argmax(s)]} with a prediction of {100 * np.max(s)}")
             cv2.imshow('image', i)
             cv2.waitKey()
+        """
+    class_names = ['No growth','Poor growth','Good growth']
 
+    test_plate = plates[0]
+    test_plate.link_model(model, key=class_names)
+    print(test_plate.annotate_images())
+    print()
 if __name__ == "__main__": 
     main()
