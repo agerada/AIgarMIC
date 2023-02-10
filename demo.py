@@ -1,12 +1,14 @@
 import cv2
 from imutils import contours
 import numpy as np
+from plate import Plate
+import tensorflow as tf
 
 """
 Adapted from https://stackoverflow.com/questions/72089623/how-to-sort-contours-of-a-grid-using-opencv-python
 and https://stackoverflow.com/questions/59182827/how-to-get-the-cells-of-a-sudoku-grid-with-opencv"""
 # Load image, grayscale, and simple threshold
-image = cv2.imread('images/0.125.jpg')
+image = cv2.imread('images/example_plates/0.5.jpg')
 cv2.imshow("original", image)
 cv2.waitKey()
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -20,9 +22,15 @@ cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 grid_contours = []
 for c in cnts:
     area = cv2.contourArea(c)
-    if area > 20000 and area < 30000: 
+    if area > 1000: 
+    #if area > 20000 and area < 30000: 
         grid_contours.append(c)
-        cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
+        #cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
+
+# sort contours and remove biggest (outer) grid square
+grid_contours = sorted(grid_contours, key=cv2.contourArea)
+grid_contours = grid_contours[:-1]
+
 # Check that we found 96 boxes 
 if len(grid_contours) != 96: 
     raise(ValueError)
@@ -49,3 +57,18 @@ for col in sorted_grid:
         result[mask==0] = 255
         cv2.imshow('result', result)
         cv2.waitKey(100)
+
+cv2.destroyAllWindows()
+# Test out Plate class
+test_plate = Plate("gentamicin", 0.5, 'images/example_plates/0.5.jpg')
+print(test_plate)
+
+model = tf.keras.models.load_model("models/")
+class_names = ['No growth','Poor growth','Good growth']
+
+test_plate.link_model(model, class_names)
+test_plate.annotate_images()
+print("Overall interpretation of plate: ")
+test_plate.print_matrix()
+cv2.imshow(test_plate.drug + str(test_plate.concentration), test_plate.image)
+cv2.waitKey()

@@ -30,7 +30,7 @@ To run a demonstration of the image processing module:
 
     python demo.py
 
-### Manual annotation 
+### Manual Annotation
 
 In order to generate manually annotated images, use (IMP: -o MUST be used): 
 

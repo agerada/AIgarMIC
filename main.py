@@ -13,7 +13,7 @@ from imutils import contours
 import numpy as np
 from process_plate_image import *
 import os
-from plate import Plate
+from plate import Plate, PlateSet
 import tensorflow as tf
 import argparse
 import random
@@ -40,7 +40,7 @@ def main():
     if args.model: 
         model = tf.keras.models.load_model(args.model)
         
-        """
+        
         random_images = []
         predictions = []
         scores = []
@@ -56,12 +56,19 @@ def main():
             print(f"This image was predicted as: {class_names[np.argmax(s)]} with a prediction of {100 * np.max(s)}")
             cv2.imshow('image', i)
             cv2.waitKey()
-        """
+        
     class_names = ['No growth','Poor growth','Good growth']
 
     test_plate = plates[0]
     test_plate.link_model(model, key=class_names)
     print(test_plate.annotate_images())
+
+    for i in plates: 
+        i.link_model(model, key=class_names)
+        i.annotate_images()
+    plate_set = PlateSet(plates)
+    print(plate_set.calculate_MIC())
+    print(plate_set.convert_mic_matrix(str))
     print()
 if __name__ == "__main__": 
     main()
