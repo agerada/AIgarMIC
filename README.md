@@ -22,13 +22,19 @@ Some shearing is allowed and corrected in the pre-processing:
 
 ### Install 
 
+The recommended setup is to use the supplied conda environment (agar-diluation): 
+
+    $ conda env create --file environment.yaml
+    $ conda activate agar-dilution
+    (agar-dilution) $ python demo.py
+
 Install dependencies using `requirements.txt`. 
 
 ### Demo
 
 To run a demonstration of the image processing module: 
 
-    python demo.py
+    $ python demo.py
 
 ### Manual Annotation
 
@@ -75,6 +81,8 @@ Use `main.py`. At present this script reads example plates for gentamicin and sh
 
 ## To-Do
 
-* Algorithm to calculate MIC from annotations
+* ~~Algorithm to calculate MIC from annotations~~
 * QC (controls and "skipped" plates)
 * Option to save output
+* Parallel processing of plate image labelling
+* Improve model fit

@@ -191,6 +191,17 @@ class PlateSet:
                         mic_matrix[row][col] = plate.concentration
         self.mic_matrix = mic_matrix
         return mic_matrix
+    
+    def generate_QC(self): 
+        qc_matrix = np.full(self.mic_matrix.shape, str)
+        for i,row in enumerate(self.positive_control_plate.growth_matrix): 
+            for j,item in enumerate(row): 
+                if item != "Good growth": 
+                    qc_matrix[i][j] = "F"
+                else: 
+                    qc_matrix[i][j] = "P"
+        self.qc_matrix = qc_matrix
+        return qc_matrix
 
     def __repr__(self) -> str:
         return f"PlateSet of {self.drug} with {len(self.antibiotic_plates)} concentrations: {[i.concentration for i in self.antibiotic_plates]}"

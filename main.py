@@ -69,6 +69,7 @@ def main():
     plate_set = PlateSet(plates)
     print(plate_set.calculate_MIC())
     print(plate_set.convert_mic_matrix(str))
+    print(plate_set.generate_QC())
     print()
 if __name__ == "__main__": 
     main()
