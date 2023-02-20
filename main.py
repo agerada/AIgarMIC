@@ -35,6 +35,7 @@ def main():
     """)
     parser.add_argument("-m", "--model", type=str, help="Specify file containing tensorflow model for image classificaion")
     parser.add_argument("-o", "--output_file", type=str, help="Specify output file for csv report (will be overwritten)")
+    parser.add_argument("-s", "--suppress_validation", action='store_true', help="Suppress manual validation prompts for annotations that have poor accuracy")
     args = parser.parse_args()
 
     class_names = ['No growth','Poor growth','Good growth']
@@ -67,7 +68,8 @@ def main():
         plateset_list.append(PlateSet(plates))
     
     for plateset in plateset_list:
-        plateset.review_poor_images(save_dir = "new_annotations")
+        if not args.suppress_validation: 
+            plateset.review_poor_images(save_dir = "new_annotations")
         plateset.calculate_MIC()
         plateset.generate_QC()
 
