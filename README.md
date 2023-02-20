@@ -110,3 +110,4 @@ It is recommended that manual validation is not suppressed, unless running throu
 * ~~Option to save output~~
 * ~~Parallel processing of plate image labelling~~ (unlikely to be worth effort)
 * Improve model fit - in progress (method to flag up poor annotations)
+* Specify control positions and expected MIC for control strain

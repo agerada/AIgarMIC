@@ -281,16 +281,19 @@ class PlateSet:
             print(f"*Warning* - {repr(self)} does not contain a positive control plate.")
             print("QC not valid.")
         
+        def remove_ones(code): 
+            return 0 if code == 1 else code
+        
         antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
         if len(antibiotic_plates) > 1: 
             rows = range(qc_matrix.shape[0])
             cols = range(qc_matrix.shape[1])
             for i in rows: 
                 for j in cols: 
-                    previous_growth_code = antibiotic_plates[0].growth_code_matrix[i][j]
+                    previous_growth_code = remove_ones(antibiotic_plates[0].growth_code_matrix[i][j])
                     flipped = False # we only allow one "flip" from no growth -> growth
                     for k in antibiotic_plates[1:]: 
-                        next_growth_code = k.growth_code_matrix[i][j]
+                        next_growth_code = remove_ones(k.growth_code_matrix[i][j])
                         if next_growth_code < previous_growth_code: 
                             qc_matrix[i][j] = "W"
                         if next_growth_code != previous_growth_code: 
@@ -309,14 +312,15 @@ class PlateSet:
         print(f"{len(changed)} images re-classified.")
 
     def get_csv_data(self, format="l"): 
+        mic_matrix_str = self.convert_mic_matrix(str)
         if format == 'l': 
-            row_letters = ascii_uppercase[0:len(self.mic_matrix)]
-            col_nums = [i + 1 for i in range(len(self.mic_matrix[0]))]
+            row_letters = ascii_uppercase[0:len(mic_matrix_str)]
+            col_nums = [i + 1 for i in range(len(mic_matrix_str[0]))]
             output = []
             for i in range(len(row_letters)): 
                 for j in range(len(col_nums)): 
                     position = row_letters[i]+str(col_nums[j])
-                    mic = self.mic_matrix[i][j]
+                    mic = mic_matrix_str[i][j]
                     qc = self.qc_matrix[i][j]
                     output.append({'Antibiotic': self.drug, 'Position': position, 'MIC': mic, 'QC': qc})
             return output
