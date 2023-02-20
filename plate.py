@@ -16,6 +16,8 @@ from random import choice, randrange
 from utils import convertCV2toKeras
 import tensorflow as tf
 import numpy as np
+import os 
+from string import ascii_uppercase
 
 @dataclass(order=True)
 class Plate: 
@@ -41,11 +43,24 @@ class Plate:
     def import_image(self, image): 
         self.image = image
 
-    def get_random_colony_image(self):
-        i = randrange(self.nrow)
-        j = randrange(self.ncol)
+    def get_colony_image(self, index = None):
+        """
+        Pulls colony image and associated codestamp
+        If no index is provided (default) a random image is given
+        """
+        if index: 
+            try: 
+                i,j = index
+                image = self.image_matrix[i][j]
+            except Exception as e: 
+                print(f"Invalid index provided to get_colony_image: {index}")                 
+                print(e)
+        else: 
+            i = randrange(self.nrow)
+            j = randrange(self.ncol)
+            image = self.image_matrix[i][j]
         code = self.drug + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
-        return self.image_matrix[i][j],code
+        return image,code
 
     def link_model(self, model, key): 
         print(f"linking model to plate {self.concentration}")
@@ -79,10 +94,12 @@ class Plate:
         self.predictions_matrix = []
         self.score_matrix = []
         self.growth_matrix = []
+        self.growth_code_matrix = []
         self.accuracy_matrix = []
         temp_score_row = []
         temp_predictions_row = []
         temp_growth_rows = []
+        temp_growth_code_rows = []
         temp_accuracy_row = []
         for row in self.image_matrix: 
             for image in row: 
@@ -90,18 +107,22 @@ class Plate:
                 temp_predictions_row.append(prediction)
                 score = tf.nn.softmax(prediction)
                 temp_score_row.append(score)
-                growth = self.key[np.argmax(score)]
+                growth_code = np.argmax(score)
+                growth = self.key[growth_code]
                 temp_growth_rows.append(growth)
+                temp_growth_code_rows.append(growth_code)
                 accuracy = np.max(score)
                 temp_accuracy_row.append(accuracy)
             self.predictions_matrix.append(temp_predictions_row)
             self.score_matrix.append(temp_score_row)
             self.growth_matrix.append(temp_growth_rows)
+            self.growth_code_matrix.append(temp_growth_code_rows)
             self.accuracy_matrix.append(temp_accuracy_row)
             temp_score_row = []
             temp_predictions_row = []
             temp_growth_rows = []
             temp_accuracy_row = []
+            temp_growth_code_rows = []
         return self.growth_matrix
 
     def print_matrix(self): 
@@ -118,6 +139,57 @@ class Plate:
                         print(" ", end="", sep="")
                 print()
 
+    def get_inaccurate_images(self, threshold = .9): 
+        output = set()
+        for i,row in enumerate(self.accuracy_matrix): 
+            for j,item in enumerate(row): 
+                if item < threshold: 
+                    output.add((i,j))
+        return output
+    
+    def review_poor_images(self, threshold = .9, save_dir = None): 
+        codes = {48: 0, 49: 1, 50: 2, 27: "esc", 13: "enter"}
+        inaccurate_images_indexes = self.get_inaccurate_images(threshold) 
+        changed_log = []
+        for image_index in inaccurate_images_indexes: 
+            image,stamp = self.get_colony_image(image_index)
+            i,j = image_index
+            growth = self.growth_matrix[i][j]
+            accuracy = self.accuracy_matrix[i][j]
+            print()
+            print(f"This image was labelled as {growth} with an accuracy of {accuracy * 100:.2f}")
+            cv2.imshow(str(self.concentration) + f" position {i} {j}", image)
+            print("Press enter to continue, or enter new classification: ")
+            while True: 
+                input_key = cv2.waitKey()
+                if input_key not in codes: 
+                    print("Input not recognised, please try again..")
+                    continue
+                else: 
+                    break
+            input_code = codes[input_key]
+            if input_code == "esc" or input_code == "enter" or self.key[input_code] == growth: 
+                print("Classification not changed.")
+                continue
+            else: 
+                # reassign growth
+                print(f"Reassigning image to {self.key[input_code]}")
+                self.growth_matrix[i][j] = self.key[input_code]
+                self.growth_code_matrix[i][j] = input_code
+                changed_log.append(image_index)
+                if save_dir: 
+                    if not os.path.exists(save_dir):
+                        print(f"Creating directory: {save_dir}")
+                        os.mkdir(save_dir)
+                    class_dir = os.path.join(save_dir, str(input_code))
+                    if not os.path.exists(class_dir): 
+                        print(f"Creating class subdirectory: {class_dir}")
+                        os.mkdir(class_dir)
+                    save_path = os.path.join(class_dir, stamp + ".jpg")
+                    print(f"Saving image to: {save_path}")
+                    cv2.imwrite(save_path, image)
+        return changed_log # return list of changed indexes
+        
 class PlateSet: 
     def __init__(self, plates_list) -> None:
         if not plates_list: 
@@ -159,6 +231,9 @@ class PlateSet:
         matrices_shapes = [i.shape for i in matrices_array]
         return True if all(i==matrices_shapes[0] for i in matrices_shapes) else False
 
+    def get_all_plates(self): 
+        return sorted(self.antibiotic_plates + [self.positive_control_plate])
+    
     def convert_mic_matrix(self, format = str): 
         allowed_formats = (str, float)
         if format not in allowed_formats: 
@@ -193,15 +268,58 @@ class PlateSet:
         return mic_matrix
     
     def generate_QC(self): 
-        qc_matrix = np.full(self.mic_matrix.shape, str)
-        for i,row in enumerate(self.positive_control_plate.growth_matrix): 
-            for j,item in enumerate(row): 
-                if item != "Good growth": 
-                    qc_matrix[i][j] = "F"
-                else: 
-                    qc_matrix[i][j] = "P"
+        qc_matrix = np.full(self.mic_matrix.shape, fill_value="", dtype=str)
+
+        try:
+            for i,row in enumerate(self.positive_control_plate.growth_matrix): 
+                for j,item in enumerate(row): 
+                    if item != "Good growth": 
+                        qc_matrix[i][j] = "F"
+                    else: 
+                        qc_matrix[i][j] = "P"
+        except: 
+            print(f"*Warning* - {repr(self)} does not contain a positive control plate.")
+            print("QC not valid.")
+        
+        antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
+        if len(antibiotic_plates) > 1: 
+            rows = range(qc_matrix.shape[0])
+            cols = range(qc_matrix.shape[1])
+            for i in rows: 
+                for j in cols: 
+                    previous_growth_code = antibiotic_plates[0].growth_code_matrix[i][j]
+                    flipped = False # we only allow one "flip" from no growth -> growth
+                    for k in antibiotic_plates[1:]: 
+                        next_growth_code = k.growth_code_matrix[i][j]
+                        if next_growth_code < previous_growth_code: 
+                            qc_matrix[i][j] = "W"
+                        if next_growth_code != previous_growth_code: 
+                            if not flipped: 
+                                flipped = True
+                            else: 
+                                qc_matrix[i][j] = "W"
+                        previous_growth_code = next_growth_code
+        else: 
+            print(f"*Warning* - {repr(self)} has insufficient plates for QC")
         self.qc_matrix = qc_matrix
         return qc_matrix
 
+    def review_poor_images(self, threshold = .9, save_dir = None): 
+        changed = [i.review_poor_images(threshold, save_dir) for i in self.get_all_plates()]
+        print(f"{len(changed)} images re-classified.")
+
+    def get_csv_data(self, format="l"): 
+        if format == 'l': 
+            row_letters = ascii_uppercase[0:len(self.mic_matrix)]
+            col_nums = [i + 1 for i in range(len(self.mic_matrix[0]))]
+            output = []
+            for i in range(len(row_letters)): 
+                for j in range(len(col_nums)): 
+                    position = row_letters[i]+str(col_nums[j])
+                    mic = self.mic_matrix[i][j]
+                    qc = self.qc_matrix[i][j]
+                    output.append({'Antibiotic': self.drug, 'Position': position, 'MIC': mic, 'QC': qc})
+            return output
+        
     def __repr__(self) -> str:
         return f"PlateSet of {self.drug} with {len(self.antibiotic_plates)} concentrations: {[i.concentration for i in self.antibiotic_plates]}"

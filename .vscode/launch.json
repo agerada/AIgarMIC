@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true, 
-            "args": ["-m", "models/"]
+            "args": ["images/", "-m", "models/", "-o", "test_dict.csv"]
         },
         {
             "name": "Python: train_model.py",

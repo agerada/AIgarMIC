@@ -14,6 +14,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import argparse
 import pathlib
+from utils import convertCV2toKeras
 
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -94,7 +95,7 @@ def main():
             layers.RandomRotation(0.1),
             layers.RandomZoom(0.1),
         ])
-        
+        """
         model = Sequential([
         data_augmentation, 
         layers.Rescaling(1./255, input_shape=(image_height, image_width, 3)),
@@ -109,18 +110,29 @@ def main():
         layers.Dense(128, activation='relu'),
         layers.Dense(num_classes)
         ])
-
+        """
+        
+        model = Sequential([
+            layers.Rescaling(1./255, input_shape=(image_height, image_width, 3)),
+            layers.Flatten(),
+            layers.Dense(16, activation='relu'), 
+            layers.Dense(16, activation='relu'), 
+            #layers.Dense(16, activation='relu'), 
+            layers.Dense(num_classes)
+        ])
         model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
         model.summary()
 
-        epochs=10
+        epochs=100
+        weights = {0: 1., 1: 1, 2: 1.}
         history = model.fit(
         train_dataset,
         validation_data=val_dataset,
-        epochs=epochs
+        epochs=epochs, 
+        class_weight=weights
         )
 
         if args.visualise: 
@@ -146,6 +158,20 @@ def main():
             plt.title('Training and Validation Loss')
             plt.show()
 
+            file_paths = {i: os.listdir(os.path.join(annotated_images, i)) for i in class_names}
+            # add subdirectories 
+            file_paths = {i: [os.path.join(annotated_images,i,j) for j in file_paths[i] if j.count(".jpg") > 0] for i in file_paths}
+
+            for i in file_paths: 
+                for j in file_paths[i]:
+                    image = cv2.imread(j)
+                    prediction = model.predict(convertCV2toKeras(image))
+                    score = tf.nn.softmax(prediction)
+                    classification = class_names[np.argmax(score)]
+                    if classification != i: 
+                        print(f"This image was misclassified as {classification} (should have been {i})")
+                        cv2.imshow(str(j),image)
+                        cv2.waitKey()
             if args.save: 
                 if not os.path.exists(args.save): 
                     os.mkdir(args.save)

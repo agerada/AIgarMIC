@@ -11,6 +11,7 @@ Documentation
 """
 import cv2
 import numpy as np
+import os
 
 def rectContour(contours):
     rectCon = []
@@ -39,3 +40,13 @@ def convertCV2toKeras(image):
     image = image.reshape(1, 160, 160, 3)
     image = image.astype(np.float32)
     return image
+
+def get_conc_from_path(path): 
+    """
+    get concentration from plate image path, e.g.
+    antibiotic1/0.125.jpg -> 0.125
+    """
+    split_text = os.path.split(path)
+    split_text = split_text[-1]
+    conc_str = os.path.splitext(split_text)[0]
+    return float(conc_str)

@@ -68,15 +68,18 @@ def main():
     output_annotations = []
     output_image_codes = []
     for i in range(n): 
-        x,code = choice(plates).get_random_colony_image()
+        x,code = choice(plates).get_colony_image()
         cv2.imshow('image', x)
+        print("Please enter classification for this image..")
         while True: 
             input_key = cv2.waitKey()
             if input_key not in codes: 
+                print("Input not recognised, please try again..")
                 continue
             else: 
                 break
         if codes[input_key] == 'esc': 
+            print("Exiting.")
             break
         else: 
             output_images.append(x)
