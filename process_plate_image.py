@@ -12,28 +12,39 @@ import cv2
 from imutils import contours
 import numpy as np
 
+def find_threshold_value(image, start = 20, end = 100, by = 1, 
+                   look_for = 96, area_lower_bound = 1000): 
+    for i in range(start, end, by): 
+        ret, thresh = cv2.threshold(image, i, 255, cv2.THRESH_BINARY_INV)
+        
+        # Find contours and filter using area
+        cnts = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+        grid_contours = []
+        for c in cnts:
+            area = cv2.contourArea(c)
+            if area > area_lower_bound: 
+                grid_contours.append(c)
+
+        # sort contours and remove biggest (outer) grid square
+        grid_contours = sorted(grid_contours, key=cv2.contourArea)
+        grid_contours = grid_contours[:-1]
+
+        # If we find the target boxes, return contours and threshold
+        if len(grid_contours) == look_for: 
+            return grid_contours, i
+    return None, None
+
+
 def split_by_grid(image, nrow = 8): 
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(gray,50,255,cv2.THRESH_BINARY_INV)
+    blur = cv2.GaussianBlur(image, (25,25), 0)
+    gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
+    grid_contours, threshold_value = find_threshold_value(gray)
 
-    # Find contours and filter using area
-    cnts = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-    grid_contours = []
-    for c in cnts:
-        area = cv2.contourArea(c)
-        if area > 1000: 
-        #if area > 20000 and area < 30000: 
-            grid_contours.append(c)
-            #cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
-
-    # sort contours and remove biggest (outer) grid square
-    grid_contours = sorted(grid_contours, key=cv2.contourArea)
-    grid_contours = grid_contours[:-1]
-
-    # Check that we found 96 boxes 
-    if len(grid_contours) != 96: 
-        raise(ValueError)
+    if not grid_contours: 
+        raise ValueError("Unable to find contours threshold that returns correct number of colony images")
+    else: 
+        print(f"Using {threshold_value} threshold value")
 
     # Sort contours, starting left to right
     (grid_contours, _) = contours.sort_contours(grid_contours, method="left-to-right")

@@ -7,14 +7,34 @@ import tensorflow as tf
 """
 Adapted from https://stackoverflow.com/questions/72089623/how-to-sort-contours-of-a-grid-using-opencv-python
 and https://stackoverflow.com/questions/59182827/how-to-get-the-cells-of-a-sudoku-grid-with-opencv"""
+
+INPUT_FILE = 'example_plates/IMG_0033.JPG'
+"""
 # Load image, grayscale, and simple threshold
-image = cv2.imread('images/example_plates/0.5.jpg')
+image = cv2.imread(INPUT_FILE)
 cv2.imshow("original", image)
 cv2.waitKey()
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-ret, thresh = cv2.threshold(gray,50,255,cv2.THRESH_BINARY_INV)
-cv2.imshow('thres', thresh)
+blur = cv2.GaussianBlur(image, (25,25), 0)
+cv2.imshow('blur', blur)
 cv2.waitKey()
+gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
+cv2.imshow('gray',gray)
+cv2.waitKey()
+ret, thresh = cv2.threshold(gray,20,255,cv2.THRESH_BINARY_INV)
+cv2.imshow('Binary thresholding', thresh)
+cv2.waitKey()
+
+# Adaptive thresholding compensates for lighting differences, but not ideal for this use
+adaptive = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 107, 6)
+cv2.imshow('adaptive', adaptive)
+cv2.waitKey()
+
+# Otsu algorithm tries to automate the process, but does not seem to work well for this
+blur = cv2.GaussianBlur(gray, (5,5), 0) 
+ret_otsu, thresh_otsu = cv2.threshold(blur, 50, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+cv2.imshow('otsu', thresh_otsu)
+cv2.waitKey()
+
 
 # Find contours and filter using area
 cnts = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -22,11 +42,14 @@ cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 grid_contours = []
 for c in cnts:
     area = cv2.contourArea(c)
-    if area > 1000: 
+    if area > 20000: 
     #if area > 20000 and area < 30000: 
         grid_contours.append(c)
-        #cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
-
+        cv2.drawContours(image, [c], 0, (0,255,0), 3)
+        cv2.imshow("contour_test", image)
+        cv2.waitKey()
+cv2.imshow("contours", image)
+cv2.waitKey()
 # sort contours and remove biggest (outer) grid square
 grid_contours = sorted(grid_contours, key=cv2.contourArea)
 grid_contours = grid_contours[:-1]
@@ -59,8 +82,11 @@ for col in sorted_grid:
         cv2.waitKey(100)
 
 cv2.destroyAllWindows()
+"""
+
+
 # Test out Plate class
-test_plate = Plate("gentamicin", 0.5, 'images/example_plates/0.5.jpg')
+test_plate = Plate("test", 0.5, INPUT_FILE)
 print(test_plate)
 
 model = tf.keras.models.load_model("models/")
