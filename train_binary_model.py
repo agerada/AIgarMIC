@@ -14,6 +14,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import argparse
 import pathlib
+import warnings
+import csv
 from utils import convertCV2toKeras
 
 import tensorflow as tf
@@ -32,7 +34,7 @@ def create_dataset_from_directory(path, val_split = 0.2,
                 seed=12345, 
                 image_size=(image_width, image_height), 
                 batch_size=32, 
-                color_mode='grayscale'
+                label_mode='binary'
             )
     val_dataset = tf.keras.utils.image_dataset_from_directory(
         path, 
@@ -41,10 +43,31 @@ def create_dataset_from_directory(path, val_split = 0.2,
         seed=12345, 
         image_size=(image_width, image_height), 
         batch_size=32, 
-        color_mode='grayscale'
+        label_mode='binary'
     )
     print(f"Found the following labels/classes: {train_dataset.class_names}")
     return train_dataset,val_dataset
+
+def predict_images_from_directory(path, model, class_names, image_width, image_height, threshold = 0.5):
+    output = []
+    file_paths = {i: os.listdir(os.path.join(path, i)) for i in class_names}
+    # add subdirectories 
+    file_paths = {i: [os.path.join(path,i,j) for j in file_paths[i] if j.count(".jpg") > 0] for i in file_paths}
+
+    for i in file_paths: 
+        for j in file_paths[i]: 
+            image = cv2.imread(j)
+            prediction = model.predict(convertCV2toKeras(image, image_width, image_height))
+            [prediction] = prediction.reshape(-1)
+            predicted_class = class_names[0] if prediction <= threshold else class_names[1]
+            true_class = i
+            path = j
+            output.append({"image": image, 
+                           "path": path, 
+                           "prediction": prediction, 
+                           "predicted_class": predicted_class, 
+                           "true_class": true_class})
+    return output
 
 def main(): 
     parser = argparse.ArgumentParser("""
@@ -55,6 +78,7 @@ def main():
     parser.add_argument("-p", "--pickled", action="store_true", help="Load data from pickled (.p) files - NOT IMPLEMENTED")
     parser.add_argument("-v", "--visualise", action="store_true", help="Generate visualisations for model diagnostics")
     parser.add_argument("-s", "--save", type=str, help="If specified, tensorflow model will be saved to this folder")
+    parser.add_argument("-l", "--log", action="store_true", help="Store performance log in output folder")
     args = parser.parse_args()
 
     ANNOTATIONS_FOLDER = args.annotations
@@ -86,15 +110,6 @@ def main():
         image_width = 160
         train_dataset,val_dataset = create_dataset_from_directory(annotated_images)
         class_names = train_dataset.class_names
-
-        if args.visualise: 
-            plt.figure(figsize=(10, 10))
-            for images, labels in train_dataset.take(1):
-                for i in range(9):
-                    ax = plt.subplot(3, 3, i + 1)
-                    plt.imshow(images[i].numpy().astype("uint8"))
-                    plt.title(class_names[labels[i]])
-                    plt.axis("off")
         
         num_classes = len(class_names)
 
@@ -131,36 +146,46 @@ def main():
         """
         
         
-        
-        
-        model = Sequential([ 
-            #data_augmentation,
-            layers.Rescaling(1./255, input_shape=(image_height, image_width, 1)),
+        growth_no_growth = [ 
+            layers.Rescaling(1./255, input_shape=(image_height, image_width, 3)),
+            layers.Conv2D(64, (3,3), activation='relu', padding='same'),
+            layers.MaxPooling2D((2,2)),
             layers.Flatten(),
-            layers.Dense(4, activation='relu'), 
-            #layers.Dropout(0.25), 
-            layers.Dense(4, activation='relu'), 
-            #layers.Dropout(0.25), 
-            #layers.Dense(16, activation='relu'), 
-            layers.Dense(num_classes)
-        ])
+            layers.Dense(64, activation='relu'), 
+            layers.Dropout(0.1), 
+            layers.Dense(64, activation='relu'), 
+            layers.Dropout(0.1), 
+            layers.Dense(1, activation='sigmoid')
+        ]
         
+        growth_poor_growth = [ 
+            layers.Rescaling(1./255, input_shape=(image_height, image_width, 3)),
+            layers.Conv2D(128, (3,3), activation='relu', padding='same'),
+            layers.MaxPooling2D((2,2)),
+            layers.Flatten(),
+            layers.Dense(64, activation='relu'), 
+            layers.Dropout(0.1), 
+            layers.Dense(64, activation='relu'), 
+            layers.Dropout(0.1), 
+            layers.Dense(1, activation='sigmoid')
+        ]
+
+        model = Sequential(growth_poor_growth)
         
-        
-        model.compile(optimizer=keras.optimizers.legacy.Adam(learning_rate=.0001),
+        model.compile(optimizer=keras.optimizers.legacy.Adam(learning_rate=.001),
               loss=tf.keras.losses.BinaryCrossentropy(),
               metrics=['accuracy'])
 
         model.summary()
 
-        epochs=200
-        weights = {0: 1., 1: 1., 2: 1.}
+        epochs=40
         history = model.fit(
         train_dataset,
         validation_data=val_dataset,
         epochs=epochs, 
-        #class_weight=weights
         )
+        
+        annotation_log = predict_images_from_directory(annotated_images, model, class_names, image_width, image_height)
 
         if args.visualise: 
             acc = history.history['accuracy']
@@ -185,25 +210,33 @@ def main():
             plt.title('Training and Validation Loss')
             plt.show()
 
-            file_paths = {i: os.listdir(os.path.join(annotated_images, i)) for i in class_names}
-            # add subdirectories 
-            file_paths = {i: [os.path.join(annotated_images,i,j) for j in file_paths[i] if j.count(".jpg") > 0] for i in file_paths}
+            for i in annotation_log: 
+                if i["predicted_class"] != i["true_class"]: 
+                    print(
+                    f"This image was misclassified as {i['predicted_class']} "
+                    f"with prediction of {i['prediction']} "
+                    f"(should have been {i['true_class']})")
+                    cv2.imshow(str(i['path']),i['image'])
+                    cv2.waitKey()
+                else: 
+                    print(f"Correct classification with prediction {i['prediction']} (class {i['true_class']})")
 
-            for i in file_paths: 
-                for j in file_paths[i]:
-                    image = cv2.imread(j)
-                    prediction = model.predict(convertCV2toKeras(image, size_x=image_width, size_y=image_height))
-                    score = tf.nn.softmax(prediction)
-                    classification = class_names[np.argmax(score)]
-                    if classification != i: 
-                        print(f"This image was misclassified as {classification} (should have been {i})")
-                        cv2.imshow(str(j),image)
-                        cv2.waitKey()
-            if args.save: 
-                if not os.path.exists(args.save): 
-                    os.mkdir(args.save)
-                model.save(args.save)
-                print(f"Model saved to {args.save}")
+        if args.save: 
+            if not os.path.exists(args.save): 
+                os.mkdir(args.save)
+            model.save(args.save)
+            print(f"Model saved to {args.save}")
                 
+        if args.log: 
+            if not args.save: 
+                warnings.warn("Unable to save log file because model save path not provided, please use -s to provide path.")
+            else: 
+                log_file = os.path.join(args.save, "log.csv")
+                with open(log_file, "w") as file: 
+                    writer = csv.DictWriter(file, ['path', 'prediction','predicted_class','true_class'], 
+                                            extrasaction='ignore')
+                    writer.writeheader()
+                    writer.writerows(annotation_log)
+            
 if __name__ == "__main__": 
     main()

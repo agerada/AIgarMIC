@@ -30,6 +30,16 @@ The recommended setup is to use the supplied conda environment (agar-diluation):
 
 Alternatively install dependencies using pip and `requirements.txt`. 
 
+### Prep work 
+
+Organise your image in a directory tree that satisfies `main.py` requirements (see below). For example, 
+
+    \date_of_run\antibiotic_name\concentration1..n.JPG
+
+For batch rotation of images, an automated tool such as imagemagick may be useful: 
+
+    $ for image in *.JPG; do convert $image -rotate 90 rotated-$image; done
+
 ### Demo
 
 To run a demonstration of the image processing module: 

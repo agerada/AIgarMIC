@@ -37,7 +37,7 @@ def main():
 
     folder = args.directory
     gent_images = os.listdir(folder)
-    gent_images = [i for i in gent_images if i.count('.jpg') > 0]
+    gent_images = [i for i in gent_images if i.count('.jpg') > 0 or i.count('.JPG') > 0]
     plates = []
     for path in gent_images: 
         try: 

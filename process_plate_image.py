@@ -36,10 +36,18 @@ def find_threshold_value(image, start = 20, end = 100, by = 1,
     return None, None
 
 
-def split_by_grid(image, nrow = 8): 
+def split_by_grid(image, nrow = 8, visualise_contours = False, plate_name = None): 
+    if visualise_contours and not plate_name: 
+         raise ValueError("Pass plate name to split_by_grid if using visualise_contours")
     blur = cv2.GaussianBlur(image, (25,25), 0)
     gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
     grid_contours, threshold_value = find_threshold_value(gray)
+    
+    if visualise_contours: 
+                _image = image
+                cv2.drawContours(_image, grid_contours, -1, (0,255,0), 10)
+                cv2.imshow(plate_name, _image)
+                cv2.waitKey()
 
     if not grid_contours: 
         raise ValueError("Unable to find contours threshold that returns correct number of colony images")

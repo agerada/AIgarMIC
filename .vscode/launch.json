@@ -5,13 +5,34 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: main.py",
+            "name": "Python: train_binary_model.py",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true, 
-            "args": ["images/", "-m", "models/", "-o", "test_dict.csv"]
+            "args": [
+                "annotations/binary_clean_growth_poor_growth",
+                "-v",
+                "-s",
+                "models/", 
+                "-l"
+            ]
+        },
+        {
+            "name": "Python: main.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "images/2023-03-07_thick",
+                "-m",
+                "models/",
+                "-o",
+                "2023-03-07.csv"
+            ]
         },
         {
             "name": "Python: train_model.py",
@@ -21,6 +42,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
+                "annotations/binary",
                 "-v",
                 "-s",
                 "models/"
@@ -34,7 +56,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "images/gent",
+                "example_plates/annotation_rich_plates",
                 "-o"
             ]
         },

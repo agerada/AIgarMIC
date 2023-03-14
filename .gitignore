@@ -1,5 +1,8 @@
 ############## PROJECT ###############
 archive/
+models/
+models_archive/
+models_binary/
 
 ############## PYTHON ################
 # Byte-compiled / optimized / DLL files

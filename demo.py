@@ -8,8 +8,8 @@ import tensorflow as tf
 Adapted from https://stackoverflow.com/questions/72089623/how-to-sort-contours-of-a-grid-using-opencv-python
 and https://stackoverflow.com/questions/59182827/how-to-get-the-cells-of-a-sudoku-grid-with-opencv"""
 
-INPUT_FILE = 'example_plates/IMG_0033.JPG'
-"""
+INPUT_FILE = 'images/2023-03-07_thick/flomoxef/0.03125.JPG'
+
 # Load image, grayscale, and simple threshold
 image = cv2.imread(INPUT_FILE)
 cv2.imshow("original", image)
@@ -82,7 +82,7 @@ for col in sorted_grid:
         cv2.waitKey(100)
 
 cv2.destroyAllWindows()
-"""
+
 
 
 # Test out Plate class

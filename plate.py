@@ -26,6 +26,7 @@ class Plate:
     image_path: Optional[str] = None
     nrow: int = 8
     ncol: int = 12
+    visualise_contours: bool = False
 
     def __post_init__(self): 
         type_check_fields = ["concentration"]
@@ -35,10 +36,13 @@ class Plate:
                 raise TypeError(f"The field `{name}` was assigned with `{current_type}` instead of `{field_type}`")
         if self.image_path: 
             self.image = cv2.imread(self.image_path)
-            self.image_matrix = split_by_grid(self.image, self.nrow)
+            self.image_matrix = split_by_grid(self.image, self.nrow, visualise_contours=self.visualise_contours, 
+                                              plate_name=self.drug + '_' + str(self.concentration))
 
     def split_images(self): 
-        self.image_matrix = split_by_grid(self.image, self.nrow)
+        self.image_matrix = split_by_grid(self.image, self.nrow, 
+                                          visualise_contours=self.visualise_contours, 
+                                          plate_name=self.drug + '_' + str(self.concentration))
 
     def import_image(self, image): 
         self.image = image
@@ -62,10 +66,15 @@ class Plate:
         code = self.drug + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
         return image,code
 
-    def link_model(self, model, key): 
+    def link_model(self, model, key, model_image_x = 160, model_image_y = 160): 
+        """
+        model_image_x and model_image_y are the pixel dimensions used to train the model
+        """
         print(f"linking model to plate {self.concentration}")
         self.model = model
         self.key = key
+        self.model_image_x = model_image_x
+        self.model_image_y = model_image_y
 
     def annotate_images(self, model=None, key=None): 
         print(f"annotating plate images - {self.concentration}")
@@ -103,7 +112,7 @@ class Plate:
         temp_accuracy_row = []
         for row in self.image_matrix: 
             for image in row: 
-                prediction = self.model.predict(convertCV2toKeras(image)) 
+                prediction = self.model.predict(convertCV2toKeras(image, size_x=self.model_image_x, size_y=self.model_image_y)) 
                 temp_predictions_row.append(prediction)
                 score = tf.nn.softmax(prediction)
                 temp_score_row.append(score)

@@ -17,11 +17,14 @@ from plate import Plate, PlateSet
 import tensorflow as tf
 import argparse
 import random
-from utils import convertCV2toKeras, get_conc_from_path
+from utils import convertCV2toKeras, get_conc_from_path, get_paths_from_directory
 from multiprocessing import Pool
 import csv
 
 def main(): 
+    MODEL_IMAGE_X = 160
+    MODEL_IMAGE_Y = 160
+
     parser = argparse.ArgumentParser(description="Main script to interpret agar dilution MICs",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('directory', type=str, help=
@@ -36,29 +39,25 @@ def main():
     parser.add_argument("-m", "--model", type=str, help="Specify file containing tensorflow model for image classificaion")
     parser.add_argument("-o", "--output_file", type=str, help="Specify output file for csv report (will be overwritten)")
     parser.add_argument("-s", "--suppress_validation", action='store_true', help="Suppress manual validation prompts for annotations that have poor accuracy")
+    parser.add_argument("-c", "--check_contours", action="store_true", help="Check contours visually")
     args = parser.parse_args()
 
     class_names = ['No growth','Poor growth','Good growth']
 
-    abx_names = [i for i in os.listdir(args.directory) 
-                 if not i.startswith('.') and 
-                 os.path.isdir(os.path.join(args.directory,i))]
-    
-    plate_images_paths = {}
-    for abx in abx_names: 
-        _path = os.path.join(args.directory, abx)
-        _temp_plate_images_paths = os.listdir(_path)
-        _temp_plate_images_paths = [i for i in _temp_plate_images_paths if i.count('.jpg') > 0]
-        _temp_plate_images_paths = [os.path.join(args.directory,abx,i) for i in _temp_plate_images_paths]
-        plate_images_paths[abx] = _temp_plate_images_paths
-    
+    plate_images_paths = get_paths_from_directory(args.directory)
+    if args.check_contours: 
+        for abx, paths in plate_images_paths.items(): 
+            for path in paths: 
+                _image = cv2.imread(path)
+                split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_conc_from_path(path)))
+
     abx_superset = {}
     model = tf.keras.models.load_model(args.model)
     for abx, paths in plate_images_paths.items(): 
         _plates = []
         for path in paths: 
-            plate = Plate(abx, get_conc_from_path(path), path)
-            plate.link_model(model, class_names)
+            plate = Plate(abx, get_conc_from_path(path), path, visualise_contours=False)
+            plate.link_model(model, class_names, model_image_x=MODEL_IMAGE_X, model_image_y=MODEL_IMAGE_Y)
             plate.annotate_images()
             _plates.append(plate)
         abx_superset[abx] = _plates
@@ -69,7 +68,7 @@ def main():
     
     for plateset in plateset_list:
         if not args.suppress_validation: 
-            plateset.review_poor_images(save_dir = "new_annotations")
+            plateset.review_poor_images(save_dir = "new_annotations", threshold=.9)
         plateset.calculate_MIC()
         plateset.generate_QC()
 

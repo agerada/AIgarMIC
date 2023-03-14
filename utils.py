@@ -32,12 +32,12 @@ def getCornerPoints(contour):
     approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
     return approx
 
-def convertCV2toKeras(image): 
+def convertCV2toKeras(image, size_x=160, size_y=160): 
     # resize
-    image =cv2.resize(image, (160, 160))
+    image =cv2.resize(image, (size_x, size_y))
     # convert from BGR to RGB
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = image.reshape(1, 160, 160, 3)
+    image = image.reshape(1, size_x, size_y, 3)
     image = image.astype(np.float32)
     return image
 
@@ -50,3 +50,21 @@ def get_conc_from_path(path):
     split_text = split_text[-1]
     conc_str = os.path.splitext(split_text)[0]
     return float(conc_str)
+
+def get_paths_from_directory(path): 
+    """
+    Returns a dict of abx_names: [image1_path, image2_path..etc]
+    """
+    abx_names = [i for i in os.listdir(path) 
+                if not i.startswith('.') and 
+                os.path.isdir(os.path.join(path,i))]
+
+    plate_images_paths = {}
+    for abx in abx_names: 
+        _path = os.path.join(path, abx)
+        _temp_plate_images_paths = os.listdir(_path)
+        _temp_plate_images_paths = [i for i in _temp_plate_images_paths if i.count('.jpg') > 0 or i.count('.JPG') > 0]
+        _temp_plate_images_paths = [os.path.join(path,abx,i) for i in _temp_plate_images_paths]
+        plate_images_paths[abx] = _temp_plate_images_paths
+
+    return plate_images_paths
