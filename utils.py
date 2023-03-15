@@ -54,11 +54,16 @@ def get_conc_from_path(path):
 def get_paths_from_directory(path): 
     """
     Returns a dict of abx_names: [image1_path, image2_path..etc]
+    If there are no antibiotic subdirectories, "unnamed" is used 
+    for abx_names (length = 1)
     """
     abx_names = [i for i in os.listdir(path) 
                 if not i.startswith('.') and 
                 os.path.isdir(os.path.join(path,i))]
-
+    
+    if not abx_names: 
+        abx_names = [""]
+    
     plate_images_paths = {}
     for abx in abx_names: 
         _path = os.path.join(path, abx)

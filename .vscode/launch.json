@@ -57,7 +57,7 @@
             "justMyCode": true,
             "args": [
                 "example_plates/annotation_rich_plates",
-                "-o"
+                "-o", "new_annotations/"
             ]
         },
         {

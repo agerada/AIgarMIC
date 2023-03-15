@@ -25,28 +25,27 @@ import argparse
 from random import choice
 import pickle
 from datetime import datetime
+from utils import get_conc_from_path, get_paths_from_directory
 
 def main(): 
-    OUTPUT_DIR = "annotations/"
     parser = argparse.ArgumentParser(description="Manually annotate plate images")
-    parser.add_argument('directory', type=str, help="Directory containing plate images")
-    parser.add_argument('-o', '--output_to_files', action='store_true', help="Output to .jpg files in subfolders in annotations/    If not used, then defaults to storing in .p pickle files (NOT IMPLEMENTED)  [ default FALSE ]")
+    parser.add_argument('input_directory', type=str, help="Directory containing plate images")
+    parser.add_argument('-o', '--output_directory', type=str, default='annotations/', help='Path to store annotation output files')
     args = parser.parse_args()
 
     codes = {48: 0, 49: 1, 50: 2, 27: "esc"}
 
-    folder = args.directory
-    gent_images = os.listdir(folder)
-    gent_images = [i for i in gent_images if i.count('.jpg') > 0 or i.count('.JPG') > 0]
+    input_dir = args.input_directory
+    plate_image_paths = get_paths_from_directory(input_dir)
     plates = []
-    for path in gent_images: 
-        try: 
-            conc = float(os.path.splitext(path)[0])
-            plates.append(Plate("gentamicin", conc, os.path.join(folder, path)))
-        except Exception as e: 
-            print(f"Error while trying to import {path}: ")
-            print(e)
-    plates.sort(reverse=True)
+    for abx, paths in plate_image_paths.items(): 
+        for path in paths: 
+            try: 
+                conc = get_conc_from_path(path)
+                plates.append(Plate(abx, conc, path, visualise_contours=False))
+            except Exception as e: 
+                print(f"Error while trying to import {path}: ")
+                print(e)
 
     print("Use the following key for input: ")
     print("0 = no growth")
@@ -69,6 +68,7 @@ def main():
     output_image_codes = []
     for i in range(n): 
         x,code = choice(plates).get_colony_image()
+        code = code + '_' + datetime.now().strftime('%Y-%m-%d_%H%M%S')
         cv2.imshow('image', x)
         print("Please enter classification for this image..")
         while True: 
@@ -86,29 +86,17 @@ def main():
             output_annotations.append(codes[input_key])
             output_image_codes.append(code)
 
-    if args.output_to_files: 
-        if not os.path.exists(OUTPUT_DIR): 
-            os.mkdir(OUTPUT_DIR)
+    output_dir = args.output_directory
+    if not os.path.exists(output_dir): 
+        os.mkdir(output_dir)
 
-        # make class folders
-        for a in output_annotations: 
-            if not os.path.exists(os.path.join(OUTPUT_DIR, str(a))): 
-                os.mkdir(os.path.join(OUTPUT_DIR, str(a)))
-        
-        for i,a,c in zip(output_images, output_annotations, output_image_codes): 
-            cv2.imwrite(os.path.join(OUTPUT_DIR, str(a), c + '.jpg'),i)
-
-    else: 
-        input_filename = input("Done. Enter filename for annotations (optional).. ")
-        input_filename = input_filename + "_" + datetime.now().strftime('%Y-%m-%d_%H%M%S') + ".p"
-        
-        if not os.path.exists(OUTPUT_DIR): 
-            os.mkdir(OUTPUT_DIR)
-        output_file_path = os.path.join(OUTPUT_DIR, input_filename)
-
-        with open(output_file_path, "wb") as f: 
-            pickle.dump(output_images, f)
-            pickle.dump(output_annotations, f)
+    # make class folders
+    for a in output_annotations: 
+        if not os.path.exists(os.path.join(output_dir, str(a))): 
+            os.mkdir(os.path.join(output_dir, str(a)))
+    
+    for i,a,c in zip(output_images, output_annotations, output_image_codes): 
+        cv2.imwrite(os.path.join(output_dir, str(a), c + '.jpg'),i)
 
 if __name__ == "__main__": 
     main()

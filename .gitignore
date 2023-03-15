@@ -1,7 +1,7 @@
 ############## PROJECT ###############
 archive/
 models/
-models_archive/
+model_archive/
 models_binary/
 
 ############## PYTHON ################

@@ -163,9 +163,9 @@ def main():
             layers.Conv2D(128, (3,3), activation='relu', padding='same'),
             layers.MaxPooling2D((2,2)),
             layers.Flatten(),
-            layers.Dense(64, activation='relu'), 
+            layers.Dense(128, activation='relu'), 
             layers.Dropout(0.1), 
-            layers.Dense(64, activation='relu'), 
+            layers.Dense(128, activation='relu'), 
             layers.Dropout(0.1), 
             layers.Dense(1, activation='sigmoid')
         ]
@@ -183,6 +183,7 @@ def main():
         train_dataset,
         validation_data=val_dataset,
         epochs=epochs, 
+        #class_weight={0: 0.5, 1: 1}
         )
         
         annotation_log = predict_images_from_directory(annotated_images, model, class_names, image_width, image_height)

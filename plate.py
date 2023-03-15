@@ -34,6 +34,10 @@ class Plate:
             if name in type_check_fields and not isinstance(self.__dict__[name], field_type):
                 current_type = type(self.__dict__[name])
                 raise TypeError(f"The field `{name}` was assigned with `{current_type}` instead of `{field_type}`")
+        
+        if not self.drug: 
+            self.drug = "unnamed_antibiotic"
+        
         if self.image_path: 
             self.image = cv2.imread(self.image_path)
             self.image_matrix = split_by_grid(self.image, self.nrow, visualise_contours=self.visualise_contours, 
@@ -63,7 +67,7 @@ class Plate:
             i = randrange(self.nrow)
             j = randrange(self.ncol)
             image = self.image_matrix[i][j]
-        code = self.drug + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
+        code = self.drug + "_" + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
         return image,code
 
     def link_model(self, model, key, model_image_x = 160, model_image_y = 160): 
