@@ -18,6 +18,7 @@ import tensorflow as tf
 import numpy as np
 import os 
 from string import ascii_uppercase
+from model import Model
 
 @dataclass(order=True)
 class Plate: 
@@ -27,6 +28,7 @@ class Plate:
     nrow: int = 8
     ncol: int = 12
     visualise_contours: bool = False
+    model: Model = None
 
     def __post_init__(self): 
         type_check_fields = ["concentration"]
@@ -70,17 +72,22 @@ class Plate:
         code = self.drug + "_" + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
         return image,code
 
-    def link_model(self, model, key, model_image_x = 160, model_image_y = 160): 
+    def link_model(self, model): 
         """
         model_image_x and model_image_y are the pixel dimensions used to train the model
         """
         print(f"linking model to plate {self.concentration}")
         self.model = model
-        self.key = key
-        self.model_image_x = model_image_x
-        self.model_image_y = model_image_y
+        self.model_image_x = model.model_image_x
+        self.model_image_y = model.model_image_y
 
-    def annotate_images(self, model=None, key=None): 
+    def get_model_key(self): 
+        if not self.model: 
+            raise LookupError("No linked model to get key from.")
+        else: 
+            return self.model.get_key()
+        
+    def annotate_images(self, model=None): 
         print(f"annotating plate images - {self.concentration}")
         if not self.image_matrix: 
             raise LookupError(
@@ -96,14 +103,6 @@ class Plate:
                 Please provide one or use link_model(). 
                 """
             )
-        key = self.key if not key else key
-        if not key: 
-            raise LookupError(
-                """
-                Unable to find an interpretation key to convert scores to label. Please provide one
-                or use link_model(). 
-                """
-            )
         self.predictions_matrix = []
         self.score_matrix = []
         self.growth_matrix = []
@@ -116,16 +115,12 @@ class Plate:
         temp_accuracy_row = []
         for row in self.image_matrix: 
             for image in row: 
-                prediction = self.model.predict(convertCV2toKeras(image, size_x=self.model_image_x, size_y=self.model_image_y)) 
-                temp_predictions_row.append(prediction)
-                score = tf.nn.softmax(prediction)
-                temp_score_row.append(score)
-                growth_code = np.argmax(score)
-                growth = self.key[growth_code]
-                temp_growth_rows.append(growth)
-                temp_growth_code_rows.append(growth_code)
-                accuracy = np.max(score)
-                temp_accuracy_row.append(accuracy)
+                prediction_data = self.model.predict(image)
+                temp_predictions_row.append(prediction_data['prediction'])
+                temp_score_row.append(prediction_data['score'])
+                temp_growth_code_rows.append(prediction_data['growth_code'])
+                temp_growth_rows.append(prediction_data['growth'])
+                temp_accuracy_row.append(prediction_data['accuracy'])
             self.predictions_matrix.append(temp_predictions_row)
             self.score_matrix.append(temp_score_row)
             self.growth_matrix.append(temp_growth_rows)
@@ -170,8 +165,8 @@ class Plate:
             growth = self.growth_matrix[i][j]
             accuracy = self.accuracy_matrix[i][j]
             print()
-            print(f"This image was labelled as {growth} with an accuracy of {accuracy * 100:.2f}")
-            cv2.imshow(str(self.concentration) + f" position {i} {j}", image)
+            print(f"This image ({self.drug + str(self.concentration)} position {i} {j}) was labelled as {growth} with an accuracy of {accuracy * 100:.2f}")
+            cv2.imshow(self.drug + str(self.concentration) + f" position {i} {j}", image)
             print("Press enter to continue, or enter new classification: ")
             while True: 
                 input_key = cv2.waitKey()
@@ -181,13 +176,13 @@ class Plate:
                 else: 
                     break
             input_code = codes[input_key]
-            if input_code == "esc" or input_code == "enter" or self.key[input_code] == growth: 
+            if input_code == "esc" or input_code == "enter" or self.get_model_key()[input_code] == growth: 
                 print("Classification not changed.")
                 continue
             else: 
                 # reassign growth
-                print(f"Reassigning image to {self.key[input_code]}")
-                self.growth_matrix[i][j] = self.key[input_code]
+                print(f"Reassigning image to {self.get_model_key()[input_code]}")
+                self.growth_matrix[i][j] = self.get_model_key()[input_code]
                 self.growth_code_matrix[i][j] = input_code
                 changed_log.append(image_index)
                 if save_dir: 
@@ -210,7 +205,7 @@ class PlateSet:
         if any([not plate.growth_matrix for plate in plates_list]): 
             raise ValueError("Please run annotate_images() on plates before initialising PlateSet")
 
-        _list_of_keys = [i.key for i in plates_list]
+        _list_of_keys = [i.get_model_key() for i in plates_list]
         if not all(i==_list_of_keys[0] for i in _list_of_keys): 
             raise ValueError("Plates supplied to PlateSet have different growth keys")
         if not _list_of_keys: 
@@ -233,7 +228,7 @@ class PlateSet:
                 else: 
                     print(f"*Warning* - multiple control plates supplied to {self.drug} PlateSet, control plates will be skipped.")
             self.antibiotic_plates = sorted(self.antibiotic_plates)
-            self.key = self.antibiotic_plates[0].key
+            self.key = self.antibiotic_plates[0].get_model_key()
 
         # check dimensions of plates' matrices
         if not self.valid_dimensions(): 

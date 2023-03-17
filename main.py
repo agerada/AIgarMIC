@@ -20,11 +20,13 @@ import random
 from utils import convertCV2toKeras, get_conc_from_path, get_paths_from_directory
 from multiprocessing import Pool
 import csv
+from model import SoftmaxModel, BinaryModel, BinaryNestedModel
+import sys
 
 def main(): 
     MODEL_IMAGE_X = 160
     MODEL_IMAGE_Y = 160
-
+    SUPPORTED_MODEL_TYPES = ['softmax', 'binary']
     parser = argparse.ArgumentParser(description="Main script to interpret agar dilution MICs",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('directory', type=str, help=
@@ -36,13 +38,30 @@ def main():
     \t \t \t 0.125.jpg \n
     \t \t \t 0.25.jpg \n
     """)
-    parser.add_argument("-m", "--model", type=str, help="Specify file containing tensorflow model for image classificaion")
+    parser.add_argument("-m", "--model", type=str, nargs="*", help="Specify one or more directories containing tensorflow model/s for image classificaion")
+    parser.add_argument("-t", "--type_model", type=str, default="softmax", help="Type of keras model, e.g., binary, softmax [default] = softmax")
     parser.add_argument("-o", "--output_file", type=str, help="Specify output file for csv report (will be overwritten)")
     parser.add_argument("-s", "--suppress_validation", action='store_true', help="Suppress manual validation prompts for annotations that have poor accuracy")
     parser.add_argument("-c", "--check_contours", action="store_true", help="Check contours visually")
     args = parser.parse_args()
 
-    class_names = ['No growth','Poor growth','Good growth']
+    if args.type_model not in SUPPORTED_MODEL_TYPES: 
+        sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
+
+    if args.type_model == "binary" and len(args.model) != 2: 
+        sys.exit(
+            """
+            For a binary type model, need paths to two keras models (first line i.e., no growth vs growth
+            and second line i.e., poor growth vs good growth)
+            """
+        )
+
+    if args.type_model == 'softmax' and len(args.model) != 1: 
+        sys.exit(
+            """
+            Softmax model can only run with one keras model
+            """
+        )
 
     plate_images_paths = get_paths_from_directory(args.directory)
     if args.check_contours: 
@@ -51,13 +70,27 @@ def main():
                 _image = cv2.imread(path)
                 split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_conc_from_path(path)))
 
+    if args.type_model == 'softmax':
+        class_names = ['No growth','Poor growth','Good growth']
+        # Since args.model is a list, unlist
+        [path_to_model] = args.model
+        model = SoftmaxModel(path_to_model, class_names, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+
+    elif args.type_model == 'binary': 
+        class_names_first_line = ['No growth', 'Growth']
+        class_names_second_line = ['Poor growth', 'Good growth']
+        first_line_model = BinaryModel(args.model[0], class_names_first_line, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+        second_line_model = BinaryModel(args.model[1], class_names_second_line, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+        model = BinaryNestedModel(first_line_model, second_line_model)
+
+    else: 
+        sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
+
     abx_superset = {}
-    model = tf.keras.models.load_model(args.model)
     for abx, paths in plate_images_paths.items(): 
         _plates = []
         for path in paths: 
-            plate = Plate(abx, get_conc_from_path(path), path, visualise_contours=False)
-            plate.link_model(model, class_names, model_image_x=MODEL_IMAGE_X, model_image_y=MODEL_IMAGE_Y)
+            plate = Plate(abx, get_conc_from_path(path), path, visualise_contours=False, model=model)
             plate.annotate_images()
             _plates.append(plate)
         abx_superset[abx] = _plates

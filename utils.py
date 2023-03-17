@@ -34,7 +34,7 @@ def getCornerPoints(contour):
 
 def convertCV2toKeras(image, size_x=160, size_y=160): 
     # resize
-    image =cv2.resize(image, (size_x, size_y))
+    image = cv2.resize(image, (size_x, size_y))
     # convert from BGR to RGB
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = image.reshape(1, size_x, size_y, 3)
@@ -73,3 +73,30 @@ def get_paths_from_directory(path):
         plate_images_paths[abx] = _temp_plate_images_paths
 
     return plate_images_paths
+
+def keras_image_to_cv2(image): 
+    img = image.numpy().astype(np.uint8)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    cv2.imshow("test",img) 
+    cv2.waitKey()
+
+def get_image_paths(dir): 
+    """
+    If there are no subdirectories in dir, returns a list of image paths
+    If there are subdirectories, returns a dict of 'subdir_name': 'path'
+    """
+    subdirs = [i for i in os.listdir(dir) 
+                if not i.startswith('.') and 
+                os.path.isdir(os.path.join(dir,i))]
+    
+    if not subdirs: 
+        return [os.path.join(dir,i) for i in os.listdir(dir)]
+    else: 
+        output = {}
+        for i in subdirs: 
+            _parent_path = os.path.join(dir, i)
+            _temp_image_paths = os.listdir(_parent_path)
+            _temp_image_paths = [i for i in _temp_image_paths if i.count('.jpg') > 0 or i.count('.JPG') > 0]
+            _temp_image_paths = [os.path.join(_parent_path, i) for i in _temp_image_paths]
+            output[i] = _temp_image_paths
+        return output

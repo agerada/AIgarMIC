@@ -22,11 +22,13 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
+from keras.regularizers import L2
 
-def create_dataset_from_directory(path, val_split = 0.2, 
-                                  image_size = (160,160), 
+IMAGE_WIDTH = 160
+IMAGE_HEIGHT = 160
+
+def create_dataset_from_directory(path, image_width, image_height, val_split = 0.2, 
                                   filter_predicate = lambda img,x: True): 
-    image_width,image_height = image_size
     train_dataset = tf.keras.utils.image_dataset_from_directory(
                 path, 
                 validation_split=val_split, 
@@ -74,11 +76,12 @@ def main():
     This script loads images from annotations directory and trains ML
     model. Loading from pickled data is not yet implemented
     """)
-    parser.add_argument("annotations", type=str, help="directory containing annotated images")
+    parser.add_argument("annotations", type=str, help="Directory containing annotated images")
     parser.add_argument("-p", "--pickled", action="store_true", help="Load data from pickled (.p) files - NOT IMPLEMENTED")
     parser.add_argument("-v", "--visualise", action="store_true", help="Generate visualisations for model diagnostics")
     parser.add_argument("-s", "--save", type=str, help="If specified, tensorflow model will be saved to this folder")
     parser.add_argument("-l", "--log", action="store_true", help="Store performance log in output folder")
+    parser.add_argument("-t", "--test_dataset", type=str, help="Testing dataset for final model evaluation. Ideally unseen data. If not provided then input directory is used (whole dataset).")
     args = parser.parse_args()
 
     ANNOTATIONS_FOLDER = args.annotations
@@ -106,26 +109,27 @@ def main():
         annotated_images = pathlib.Path(ANNOTATIONS_FOLDER)
         print(f"Number of .jpg files{len(list(annotated_images.glob('*/*.jpg')))}")
         
-        image_height = 160
-        image_width = 160
-        train_dataset,val_dataset = create_dataset_from_directory(annotated_images)
+        train_dataset,val_dataset = create_dataset_from_directory(annotated_images, image_width=IMAGE_WIDTH, 
+                                                                  image_height=IMAGE_HEIGHT)
         class_names = train_dataset.class_names
         
         num_classes = len(class_names)
 
         data_augmentation = Sequential([
             layers.RandomFlip("horizontal",
-                            input_shape=(image_height,
-                                        image_width,
+                            input_shape=(IMAGE_WIDTH,
+                                        IMAGE_WIDTH,
                                         3)),
-            layers.RandomRotation(0.1),
+            #layers.RandomRotation(0.1),
+            layers.RandomContrast(0.2),
+            layers.RandomBrightness([-0.8,0.8])
             #layers.RandomZoom(0.1),
         ])
         
         """
         model = Sequential([
         #data_augmentation, 
-        layers.Rescaling(1./255, input_shape=(image_height, image_width, 1)),
+        layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 1)),
         
         layers.Conv2D(64, (3,3), activation='relu', padding='same'),
         layers.MaxPooling2D((2,2)),
@@ -147,7 +151,7 @@ def main():
         
         
         growth_no_growth = [ 
-            layers.Rescaling(1./255, input_shape=(image_height, image_width, 3)),
+            layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
             layers.Conv2D(64, (3,3), activation='relu', padding='same'),
             layers.MaxPooling2D((2,2)),
             layers.Flatten(),
@@ -157,9 +161,38 @@ def main():
             layers.Dropout(0.1), 
             layers.Dense(1, activation='sigmoid')
         ]
+
+        growth_no_growth_simple_crop = [ 
+            """
+            Current working model for first line
+            """
+
+            #data_augmentation, 
+            layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
+            #layers.Cropping2D(cropping=10), 
+            
+            layers.Conv2D(32, (3,3), activation='relu'),
+            layers.MaxPooling2D((2,2)),
+            
+            layers.Conv2D(32, (3,3), kernel_initializer='he_uniform', activation='relu'), 
+            layers.MaxPooling2D((2,2)), 
+
+            layers.Conv2D(64, (3,3), kernel_initializer='he_uniform', activation='relu'), 
+            layers.MaxPooling2D((2,2)), 
+
+            layers.Flatten(),
+            #layers.Dense(500, activation='relu'), 
+            #layers.Dropout(0.2), 
+            layers.Dense(64, activation='relu'), 
+            layers.Dropout(0.5), 
+            layers.Dense(1, activation='sigmoid')
+        ]
         
         growth_poor_growth = [ 
-            layers.Rescaling(1./255, input_shape=(image_height, image_width, 3)),
+            """
+            Working model for second line
+            """
+            layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
             layers.Conv2D(128, (3,3), activation='relu', padding='same'),
             layers.MaxPooling2D((2,2)),
             layers.Flatten(),
@@ -170,15 +203,15 @@ def main():
             layers.Dense(1, activation='sigmoid')
         ]
 
-        model = Sequential(growth_poor_growth)
+        model = Sequential(growth_no_growth_simple_crop)
         
-        model.compile(optimizer=keras.optimizers.legacy.Adam(learning_rate=.001),
-              loss=tf.keras.losses.BinaryCrossentropy(),
+        model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=.0001),
+              loss='binary_crossentropy',
               metrics=['accuracy'])
 
         model.summary()
 
-        epochs=40
+        epochs=300
         history = model.fit(
         train_dataset,
         validation_data=val_dataset,
@@ -186,7 +219,8 @@ def main():
         #class_weight={0: 0.5, 1: 1}
         )
         
-        annotation_log = predict_images_from_directory(annotated_images, model, class_names, image_width, image_height)
+        test_directory = args.test_dataset if args.test_dataset else annotated_images
+        annotation_log = predict_images_from_directory(test_directory, model, class_names, IMAGE_WIDTH, IMAGE_HEIGHT)
 
         if args.visualise: 
             acc = history.history['accuracy']
