@@ -5,12 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: rename_images.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/rename_images.py",
+            "console": "integratedTerminal",
+            "justMyCode": true, 
+            "args": [
+                "images/amikacin", "64"
+            ]
+        },
+        {
             "name": "Python: clean_up_annotations.py",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/clean_up_annotations.py",
             "console": "integratedTerminal",
-            "justMyCode": true, 
+            "justMyCode": true,
             "args": [
                 "annotations/clean"
             ]
@@ -30,7 +41,8 @@
                 "-t",
                 "binary",
                 "-o",
-                "2023-03-17.csv"
+                "2023-03-17.csv",
+                "-c"
             ]
         },
         {
