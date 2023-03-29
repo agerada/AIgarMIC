@@ -65,10 +65,29 @@ def main():
 
     plate_images_paths = get_paths_from_directory(args.directory)
     if args.check_contours: 
+        cv2.startWindowThread()
         for abx, paths in plate_images_paths.items(): 
             for path in paths: 
                 _image = cv2.imread(path)
                 split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_conc_from_path(path)))
+        pos_replies = ['y','yes','ye']
+        neg_replies = ['n', 'no']
+        cv2.waitKey(1)
+        cv2.destroyAllWindows()
+        cv2.waitKey(1)
+        while True: 
+            input_key = input("""Completed contour checks. Would you like to continue with annotation? [Y / N]
+                              Please only proceed if all images have correctly identified 96 boxes!
+                              """)
+            input_key = input_key.lower()
+            if input_key in neg_replies:
+                sys.exit()
+            elif input_key in pos_replies: 
+                print("Continuing with annotation..")
+                break
+            else:
+                print("Unable to recognise input, please try again..")
+                continue
 
     if args.type_model == 'softmax':
         class_names = ['No growth','Poor growth','Good growth']
