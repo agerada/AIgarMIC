@@ -69,7 +69,11 @@ def main():
         for abx, paths in plate_images_paths.items(): 
             for path in paths: 
                 _image = cv2.imread(path)
-                split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_conc_from_path(path)))
+                try: 
+                    split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_conc_from_path(path)))
+                except ValueError as err:
+                    print(err)
+
         pos_replies = ['y','yes','ye']
         neg_replies = ['n', 'no']
         cv2.waitKey(1)
@@ -100,7 +104,7 @@ def main():
         class_names_second_line = ['Poor growth', 'Good growth']
         first_line_model = BinaryModel(args.model[0], class_names_first_line, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
         second_line_model = BinaryModel(args.model[1], class_names_second_line, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
-        model = BinaryNestedModel(first_line_model, second_line_model)
+        model = BinaryNestedModel(first_line_model, second_line_model, first_model_accuracy_acceptance=0.6)
 
     else: 
         sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
@@ -120,7 +124,7 @@ def main():
     
     for plateset in plateset_list:
         if not args.suppress_validation: 
-            plateset.review_poor_images(save_dir = "new_annotations", threshold=.9)
+            plateset.review_poor_images(save_dir = "new_annotations", threshold=.6)
         plateset.calculate_MIC()
         plateset.generate_QC()
 

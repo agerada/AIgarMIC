@@ -34,14 +34,14 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "images/2023-03-07_thick",
+                "images/Plate7/2023-04-09/meropenem",
                 "-m",
                 "models_binary/growth_no_growth_2023-03-17",
                 "models_binary/growth_poor_growth",
                 "-t",
                 "binary",
                 "-o",
-                "2023-03-17.csv",
+                "vo_final2.csv", 
                 "-c"
             ]
         },

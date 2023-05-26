@@ -3,6 +3,9 @@ archive/
 models/
 model_archive/
 models_binary/
+images/
+annotations/
+new_annotations/
 
 ############## PYTHON ################
 # Byte-compiled / optimized / DLL files
