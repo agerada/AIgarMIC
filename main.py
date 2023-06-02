@@ -45,24 +45,6 @@ def main():
     parser.add_argument("-c", "--check_contours", action="store_true", help="Check contours visually")
     args = parser.parse_args()
 
-    if args.type_model not in SUPPORTED_MODEL_TYPES: 
-        sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
-
-    if args.type_model == "binary" and len(args.model) != 2: 
-        sys.exit(
-            """
-            For a binary type model, need paths to two keras models (first line i.e., no growth vs growth
-            and second line i.e., poor growth vs good growth)
-            """
-        )
-
-    if args.type_model == 'softmax' and len(args.model) != 1: 
-        sys.exit(
-            """
-            Softmax model can only run with one keras model
-            """
-        )
-
     plate_images_paths = get_paths_from_directory(args.directory)
     if args.check_contours: 
         cv2.startWindowThread()
@@ -92,6 +74,24 @@ def main():
             else:
                 print("Unable to recognise input, please try again..")
                 continue
+
+    if args.type_model not in SUPPORTED_MODEL_TYPES: 
+        sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
+
+    if args.type_model == "binary" and len(args.model) != 2: 
+        sys.exit(
+            """
+            For a binary type model, need paths to two keras models (first line i.e., no growth vs growth
+            and second line i.e., poor growth vs good growth)
+            """
+        )
+
+    if args.type_model == 'softmax' and len(args.model) != 1: 
+        sys.exit(
+            """
+            Softmax model can only run with one keras model
+            """
+        )
 
     if args.type_model == 'softmax':
         class_names = ['No growth','Poor growth','Good growth']
