@@ -163,9 +163,8 @@ def main():
         ]
 
         growth_no_growth_simple_crop = [ 
-            """
-            Current working model for first line
-            """
+            # Current working model for first line
+            
 
             #data_augmentation, 
             layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
@@ -189,9 +188,9 @@ def main():
         ]
         
         growth_poor_growth = [ 
-            """
-            Working model for second line
-            """
+            
+            # Working model for second line
+
             layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
             layers.Conv2D(128, (3,3), activation='relu', padding='same'),
             layers.MaxPooling2D((2,2)),
@@ -211,7 +210,7 @@ def main():
 
         model.summary()
 
-        epochs=300
+        epochs=2
         history = model.fit(
         train_dataset,
         validation_data=val_dataset,
@@ -266,12 +265,24 @@ def main():
             if not args.save: 
                 warnings.warn("Unable to save log file because model save path not provided, please use -s to provide path.")
             else: 
-                log_file = os.path.join(args.save, "log.csv")
-                with open(log_file, "w") as file: 
+                annotation_log_file = os.path.join(args.save, "test_dataset_log.csv")
+                with open(annotation_log_file, "w") as file: 
                     writer = csv.DictWriter(file, ['path', 'prediction','predicted_class','true_class'], 
                                             extrasaction='ignore')
                     writer.writeheader()
                     writer.writerows(annotation_log)
-            
+                
+                training_log_file = os.path.join(args.save, "training_log.csv")
+                with open(training_log_file, "w") as file:
+                    writer = csv.writer(file)
+                    h = zip(
+                        history.history['accuracy'],
+                        history.history['val_accuracy'],
+                        history.history['loss'],
+                        history.history['val_loss'],
+                        range(epochs))
+                    writer.writerow(['accuracy', 'val_accuracy', 'loss', 'val_loss', 'epoch'])
+                    writer.writerows(h)
+
 if __name__ == "__main__": 
     main()
