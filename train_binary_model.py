@@ -26,6 +26,7 @@ from keras.regularizers import L2
 
 IMAGE_WIDTH = 160
 IMAGE_HEIGHT = 160
+BATCH_SIZE = 64
 
 def create_dataset_from_directory(path, image_width, image_height, val_split = 0.2, 
                                   filter_predicate = lambda img,x: True): 
@@ -35,7 +36,7 @@ def create_dataset_from_directory(path, image_width, image_height, val_split = 0
                 subset='training', 
                 seed=12345, 
                 image_size=(image_width, image_height), 
-                batch_size=32, 
+                batch_size=BATCH_SIZE, 
                 label_mode='binary'
             )
     val_dataset = tf.keras.utils.image_dataset_from_directory(
@@ -44,7 +45,7 @@ def create_dataset_from_directory(path, image_width, image_height, val_split = 0
         subset='validation', 
         seed=12345, 
         image_size=(image_width, image_height), 
-        batch_size=32, 
+        batch_size=BATCH_SIZE, 
         label_mode='binary'
     )
     print(f"Found the following labels/classes: {train_dataset.class_names}")
@@ -111,6 +112,10 @@ def main():
         
         train_dataset,val_dataset = create_dataset_from_directory(annotated_images, image_width=IMAGE_WIDTH, 
                                                                   image_height=IMAGE_HEIGHT)
+        
+        full_dataset = tf.keras.utils.image_dataset_from_directory(annotated_images, image_size=(IMAGE_HEIGHT,IMAGE_WIDTH),
+                                                                   batch_size=BATCH_SIZE, label_mode="binary")
+        
         class_names = train_dataset.class_names
         
         num_classes = len(class_names)
@@ -120,59 +125,28 @@ def main():
                             input_shape=(IMAGE_WIDTH,
                                         IMAGE_WIDTH,
                                         3)),
-            #layers.RandomRotation(0.1),
-            layers.RandomContrast(0.2),
-            layers.RandomBrightness([-0.8,0.8])
-            #layers.RandomZoom(0.1),
+            layers.RandomRotation(0.1),
         ])
         
-        """
-        model = Sequential([
-        #data_augmentation, 
-        layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 1)),
-        
-        layers.Conv2D(64, (3,3), activation='relu', padding='same'),
-        layers.MaxPooling2D((2,2)),
-        #layers.Dropout(0.25),
+        # setting bias to compensate for class imbalance
+        # needs counts of each class total first
+        full_dataset_unbatched = tuple(full_dataset.unbatch())
+        labels = [0,0]
+        for (_,label) in full_dataset_unbatched:
+            labels[int(label.numpy())] += 1
+        neg = labels[0]
+        pos = labels[1]
+        initial_bias = np.log([pos / neg])
+        initial_bias = tf.keras.initializers.Constant(initial_bias)
 
-        #layers.Conv2D(64, (3,3), activation='relu'),
-        #layers.MaxPooling2D(),
-        #layers.Dropout(0.25),
-
-        #layers.Conv2D(128, (3,3), activation='relu'),
-        #layers.MaxPooling2D(),
-        #layers.Dropout(0.2), 
-
-        layers.Flatten(),
-        layers.Dense(100, activation='relu'),
-        layers.Dense(num_classes)
-        ])
-        """
-        
-        
         growth_no_growth = [ 
-            layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
-            layers.Conv2D(64, (3,3), activation='relu', padding='same'),
-            layers.MaxPooling2D((2,2)),
-            layers.Flatten(),
-            layers.Dense(64, activation='relu'), 
-            layers.Dropout(0.1), 
-            layers.Dense(64, activation='relu'), 
-            layers.Dropout(0.1), 
-            layers.Dense(1, activation='sigmoid')
-        ]
-
-        growth_no_growth_simple_crop = [ 
             # Current working model for first line
-            
 
-            #data_augmentation, 
+            data_augmentation, 
             layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
-            #layers.Cropping2D(cropping=10), 
-            
             layers.Conv2D(32, (3,3), activation='relu'),
             layers.MaxPooling2D((2,2)),
-            
+
             layers.Conv2D(32, (3,3), kernel_initializer='he_uniform', activation='relu'), 
             layers.MaxPooling2D((2,2)), 
 
@@ -180,11 +154,9 @@ def main():
             layers.MaxPooling2D((2,2)), 
 
             layers.Flatten(),
-            #layers.Dense(500, activation='relu'), 
-            #layers.Dropout(0.2), 
             layers.Dense(64, activation='relu'), 
             layers.Dropout(0.5), 
-            layers.Dense(1, activation='sigmoid')
+            layers.Dense(1, activation='sigmoid', bias_initializer = initial_bias)
         ]
         
         growth_poor_growth = [ 
@@ -202,22 +174,30 @@ def main():
             layers.Dense(1, activation='sigmoid')
         ]
 
-        model = Sequential(growth_no_growth_simple_crop)
-        
-        model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=.0001),
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
+        # Weights adjusted to compensate for class imbalance
+        weight_0 = (1 / neg) * ( (neg + pos) / 2)
+        weight_1 = (1 / pos) * ( (neg + pos) / 2)
+        weights = {0: weight_0, 1: weight_1}
 
-        model.summary()
+        model = Sequential(growth_no_growth)
+        with tf.device('/device:GPU:0'):
+            model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=.0001),
+                loss='binary_crossentropy',
+                metrics=['accuracy'])
 
-        epochs=2
-        history = model.fit(
-        train_dataset,
-        validation_data=val_dataset,
-        epochs=epochs, 
-        #class_weight={0: 0.5, 1: 1}
-        )
+            model.summary()
+
+            epochs=300
+            history = model.fit(
+                train_dataset,
+                validation_data=val_dataset,
+                epochs=epochs, 
+                class_weight=weights
+            )
         
+        results = model.evaluate(train_dataset, batch_size=BATCH_SIZE, verbose=0)
+        print("Loss: {:0.4f}".format(results[0]))
+
         test_directory = args.test_dataset if args.test_dataset else annotated_images
         annotation_log = predict_images_from_directory(test_directory, model, class_names, IMAGE_WIDTH, IMAGE_HEIGHT)
 
