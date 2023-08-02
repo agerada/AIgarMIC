@@ -53,13 +53,13 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "annotations/binary_clean_growth_no_growth",
-                "-v",
+                "annotations/2023-07-06/binary_good_growth_poor_growth",
                 "-s",
-                "models/",
+                "models/2023-07-06/binary_good_growth_poor_growth",
                 "-l",
+                "-v",
                 "-t",
-                "annotations/testing_datasets/growth_no_growth"
+                "annotations/2023-07-06/testing_dataset/good_growth_poor_growth"
             ]
         },
         {

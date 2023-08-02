@@ -162,7 +162,7 @@ def main():
         growth_poor_growth = [ 
             
             # Working model for second line
-
+            #data_augmentation,
             layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
             layers.Conv2D(128, (3,3), activation='relu', padding='same'),
             layers.MaxPooling2D((2,2)),
@@ -171,7 +171,7 @@ def main():
             layers.Dropout(0.1), 
             layers.Dense(128, activation='relu'), 
             layers.Dropout(0.1), 
-            layers.Dense(1, activation='sigmoid')
+            layers.Dense(1, activation='sigmoid', bias_initializer = initial_bias)
         ]
 
         # Weights adjusted to compensate for class imbalance
@@ -179,7 +179,7 @@ def main():
         weight_1 = (1 / pos) * ( (neg + pos) / 2)
         weights = {0: weight_0, 1: weight_1}
 
-        model = Sequential(growth_no_growth)
+        model = Sequential(growth_poor_growth)
         with tf.device('/device:GPU:0'):
             model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=.0001),
                 loss='binary_crossentropy',
