@@ -13,10 +13,10 @@ Currently the scripts have the following requirements (but extension is possible
 * absence of other black colors on the plates, which would interfere with the threshold based automated image splitting
 
 The following image is an ideal example: 
-![Example image 1](/example_plates/0.5.jpg)
+![Example image 1](/readme_images/0.5.jpeg)
 
 Some shearing is allowed and corrected in the pre-processing: 
-![Example image 2](/example_plates/128.jpg)
+![Example image 2](/readme_images/128.jpeg)
 
 ## Usage 
 

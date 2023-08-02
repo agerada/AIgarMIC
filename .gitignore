@@ -6,6 +6,9 @@ models_binary/
 images/
 annotations/
 new_annotations/
+example_plates/
+test_run/
+results/
 
 ############## PYTHON ################
 # Byte-compiled / optimized / DLL files
