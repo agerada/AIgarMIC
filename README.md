@@ -113,6 +113,14 @@ Use `main.py`:
 
 It is recommended that manual validation is not suppressed, unless running through a bash script for example. Manual validation prompts the user to confirm image annotation when the model predicts with a <90% accuracy. In addition, the new labelled images are exported to `new_annotations/` with the same structure as `annotations/`
 
+# Plotting
+
+`model_plot.py` has the following dependencies: 
+
+    conda install -c conda-forge pygraphviz
+    pip install graphviz
+    pip install pydot
+
 ## To-Do
 
 * ~~Algorithm to calculate MIC from annotations~~
