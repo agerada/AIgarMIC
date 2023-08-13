@@ -23,8 +23,8 @@ from tensorflow.keras.models import Sequential
 from sklearn.utils import class_weight
 from tensorflow.keras import initializers
 
-IMAGE_WIDTH = 100
-IMAGE_HEIGHT = 100
+IMAGE_WIDTH = 160
+IMAGE_HEIGHT = 160
 
 def create_dataset_from_directory(path, val_split = 0.2, 
                                   image_size = (160,160), 
