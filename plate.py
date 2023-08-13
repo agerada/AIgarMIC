@@ -139,12 +139,8 @@ class Plate:
         else: 
             for row in self.growth_matrix: 
                 for result in row: 
-                    if result == "Good growth": 
-                        print("[+]", sep="", end="")
-                        print(" ", end="", sep="")
-                    else: 
-                        print("[-]", sep="", end="")
-                        print(" ", end="", sep="")
+                    print(str(result), sep="", end="")
+                    print(" ", end="", sep="")
                 print()
 
     def get_inaccurate_images(self, threshold = .9): 
@@ -262,16 +258,37 @@ class PlateSet:
 
     def calculate_MIC(self, format = str, no_growth_key_items = (0,1)): 
         _no_growth_names = [self.key[i] for i in no_growth_key_items]
+        self.no_growth_names = _no_growth_names
         self.antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
+        max_conc = max([i.concentration for i in self.antibiotic_plates])*2
         mic_matrix = np.array(self.antibiotic_plates[0].growth_matrix)
         mic_matrix = np.full(mic_matrix.shape, max([i.concentration for i in self.antibiotic_plates])*2)
+        #mic_matrix = np.zeros_like(self.antibiotic_plates[0].growth_matrix)
         rows = range(mic_matrix.shape[0])
         cols = range(mic_matrix.shape[1])
-        for plate in self.antibiotic_plates: 
-            for row in rows: 
-                for col in cols: 
-                    if plate.growth_matrix[row][col] in _no_growth_names: 
-                        mic_matrix[row][col] = plate.concentration
+
+        def get_first_negative_conc(starting_conc, row, col):
+            if self.antibiotic_plates[0].growth_matrix[row][col] not in self.no_growth_names:
+                return starting_conc
+            i_conc = self.antibiotic_plates[0].concentration
+            for plate in self.antibiotic_plates[1:]:
+                if plate.growth_matrix[row][col] not in self.no_growth_names:
+                    return i_conc
+                else:
+                    i_conc = plate.concentration
+            return i_conc
+        """
+            for plate in self.antibiotic_plates:
+                if plate.growth_matrix[row][col] not in self.no_growth_names:
+                    return starting_conc
+                if plate.growth_matrix[row][col] in self.no_growth_names:
+                    return plate.concentration
+                return plate.concentration
+        """
+            
+        for row in rows:
+            for col in cols:
+                mic_matrix[row][col] = get_first_negative_conc(max_conc, row, col)
         self.mic_matrix = mic_matrix
         return mic_matrix
     
@@ -281,7 +298,7 @@ class PlateSet:
         try:
             for i,row in enumerate(self.positive_control_plate.growth_matrix): 
                 for j,item in enumerate(row): 
-                    if item != "Good growth": 
+                    if item in self.no_growth_names: 
                         qc_matrix[i][j] = "F"
                     else: 
                         qc_matrix[i][j] = "P"
@@ -290,7 +307,7 @@ class PlateSet:
             print("QC not valid.")
         
         def remove_ones(code): 
-            return 0 if code == 1 else code
+            return 0 if code in self.no_growth_names else code
         
         antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
         if len(antibiotic_plates) > 1: 

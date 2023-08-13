@@ -23,54 +23,11 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 from keras.regularizers import L2
+from file_handlers import create_dataset_from_directory, predict_images_from_directory
 
 IMAGE_WIDTH = 160
 IMAGE_HEIGHT = 160
 BATCH_SIZE = 64
-
-def create_dataset_from_directory(path, image_width, image_height, val_split = 0.2, 
-                                  filter_predicate = lambda img,x: True): 
-    train_dataset = tf.keras.utils.image_dataset_from_directory(
-                path, 
-                validation_split=val_split, 
-                subset='training', 
-                seed=12345, 
-                image_size=(image_width, image_height), 
-                batch_size=BATCH_SIZE, 
-                label_mode='binary'
-            )
-    val_dataset = tf.keras.utils.image_dataset_from_directory(
-        path, 
-        validation_split=val_split, 
-        subset='validation', 
-        seed=12345, 
-        image_size=(image_width, image_height), 
-        batch_size=BATCH_SIZE, 
-        label_mode='binary'
-    )
-    print(f"Found the following labels/classes: {train_dataset.class_names}")
-    return train_dataset,val_dataset
-
-def predict_images_from_directory(path, model, class_names, image_width, image_height, threshold = 0.5):
-    output = []
-    file_paths = {i: os.listdir(os.path.join(path, i)) for i in class_names}
-    # add subdirectories 
-    file_paths = {i: [os.path.join(path,i,j) for j in file_paths[i] if j.count(".jpg") > 0] for i in file_paths}
-
-    for i in file_paths: 
-        for j in file_paths[i]: 
-            image = cv2.imread(j)
-            prediction = model.predict(convertCV2toKeras(image, image_width, image_height))
-            [prediction] = prediction.reshape(-1)
-            predicted_class = class_names[0] if prediction <= threshold else class_names[1]
-            true_class = i
-            path = j
-            output.append({"image": image, 
-                           "path": path, 
-                           "prediction": prediction, 
-                           "predicted_class": predicted_class, 
-                           "true_class": true_class})
-    return output
 
 def main(): 
     parser = argparse.ArgumentParser("""

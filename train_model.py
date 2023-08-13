@@ -20,6 +20,11 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
+from sklearn.utils import class_weight
+from tensorflow.keras import initializers
+
+IMAGE_WIDTH = 100
+IMAGE_HEIGHT = 100
 
 def create_dataset_from_directory(path, val_split = 0.2, 
                                   image_size = (160,160), 
@@ -84,7 +89,7 @@ def main():
         
         image_height = 160
         image_width = 160
-        train_dataset,val_dataset = create_dataset_from_directory(annotated_images)
+        train_dataset,val_dataset = create_dataset_from_directory(annotated_images, image_size=(IMAGE_WIDTH, IMAGE_HEIGHT))
         class_names = train_dataset.class_names
 
         if args.visualise: 
@@ -97,42 +102,48 @@ def main():
                     plt.axis("off")
         
         num_classes = len(class_names)
+        obs_dict = dict(zip(list(range(num_classes)), [0] * num_classes))
+        all_class_obs = []
+        for i,j in train_dataset:
+            for k in j:
+                k_arr = k.numpy()
+                obs_dict[k_arr] += 1
+                all_class_obs.append(k_arr)
 
+        class_weights = class_weight.compute_class_weight('balanced', classes=np.unique(all_class_obs), y = all_class_obs)
+        class_weights = dict(zip(list(range(num_classes)), class_weights))
+        
         data_augmentation = Sequential([
             layers.RandomFlip("horizontal",
-                            input_shape=(image_height,
-                                        image_width,
+                            input_shape=(IMAGE_WIDTH,
+                                        IMAGE_HEIGHT,
                                         3)),
             layers.RandomRotation(0.1),
             #layers.RandomZoom(0.1),
         ])
         
-        """
         model = Sequential([
         #data_augmentation, 
-        layers.Rescaling(1./255, input_shape=(image_height, image_width, 1)),
+        layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
         
-        layers.Conv2D(64, (3,3), activation='relu', padding='same'),
+        layers.Conv2D(16, (3,3), activation='relu', padding='same'),
         layers.MaxPooling2D((2,2)),
-        #layers.Dropout(0.25),
+        layers.Dropout(0.2),
 
-        #layers.Conv2D(64, (3,3), activation='relu'),
-        #layers.MaxPooling2D(),
-        #layers.Dropout(0.25),
+        layers.Conv2D(16, (3,3), activation='relu'),
+        layers.MaxPooling2D(),
+        layers.Dropout(0.2),
 
         #layers.Conv2D(128, (3,3), activation='relu'),
         #layers.MaxPooling2D(),
         #layers.Dropout(0.2), 
 
         layers.Flatten(),
-        layers.Dense(100, activation='relu'),
-        layers.Dense(num_classes)
+        layers.Dense(16, activation='relu'),
+        layers.Dense(num_classes, bias_initializer=initializers.Zeros())
         ])
+        
         """
-        
-        
-        
-        
         model = Sequential([ 
             #data_augmentation,
             layers.Rescaling(1./255, input_shape=(image_height, image_width, 1)),
@@ -144,22 +155,22 @@ def main():
             #layers.Dense(16, activation='relu'), 
             layers.Dense(num_classes)
         ])
+        """
         
         
-        
-        model.compile(optimizer=keras.optimizers.legacy.Adam(learning_rate=.0001),
+        model.compile(optimizer=keras.optimizers.legacy.Adam(learning_rate=.01),
               loss=tf.keras.losses.BinaryCrossentropy(),
               metrics=['accuracy'])
 
         model.summary()
 
         epochs=200
-        weights = {0: 1., 1: 1., 2: 1.}
+        #weights = {0: 1., 1: 1., 2: 1.}
         history = model.fit(
         train_dataset,
         validation_data=val_dataset,
         epochs=epochs, 
-        #class_weight=weights
+        class_weight=class_weights
         )
 
         if args.visualise: 
@@ -192,7 +203,7 @@ def main():
             for i in file_paths: 
                 for j in file_paths[i]:
                     image = cv2.imread(j)
-                    prediction = model.predict(convertCV2toKeras(image, size_x=image_width, size_y=image_height))
+                    prediction = model.predict(convertCV2toKeras(image, size_x=IMAGE_WIDTH, size_y=IMAGE_HEIGHT))
                     score = tf.nn.softmax(prediction)
                     classification = class_names[np.argmax(score)]
                     if classification != i: 
