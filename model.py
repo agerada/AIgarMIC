@@ -13,14 +13,20 @@ import numpy as np
 from utils import convertCV2toKeras
 
 class Model(): 
-    def __init__(self, path, key, trained_x, trained_y): 
+    def __init__(self, path, trained_x, trained_y, key=None): 
         """
         trained_x and trained_y are the image width and height on which the neural network
         was trained
         """
         self.path = path
         self.load_model(self.path)
-        self.key = key
+        if key:
+            self.key = key
+        else:
+            # infer key from final output layer of loaded model
+            final_layer = self.keras_data.layers[-1]
+            inferred_key = [str(i) for i in range(final_layer.output.shape[1])]
+            self.key = tuple(inferred_key)
         self.trained_x = trained_x
         self.trained_y = trained_y
     
@@ -79,10 +85,12 @@ class BinaryNestedModel:
     prior to use in this class.
     """
     def __init__(self, first_line_model: Model, second_line_model: Model, 
-                 first_model_accuracy_acceptance = 0.9): 
+                 first_model_accuracy_acceptance=0.9,
+                 suppress_first_model_accuracy_check=False): 
         self.first_line_model = first_line_model
         self.second_line_model = second_line_model
         self.first_model_accuracy_acceptance = first_model_accuracy_acceptance
+        self.suppress_first_model_accuracy_check = suppress_first_model_accuracy_check
 
         _key = self.second_line_model.get_key()
         _key.insert(0, self.first_line_model.get_key()[0])
@@ -91,7 +99,8 @@ class BinaryNestedModel:
 
     def predict(self, image): 
         first_line_classification = self.first_line_model.predict(image)
-        if first_line_classification['accuracy'] < self.first_model_accuracy_acceptance: 
+        if not self.suppress_first_model_accuracy_check and \
+            first_line_classification['accuracy'] < self.first_model_accuracy_acceptance: 
             # Do not try to make any additional predictions if first model poor
             return first_line_classification
         elif first_line_classification['growth_code'] == 0: 

@@ -78,3 +78,24 @@ keras_model = [
     layers.Flatten(),
     layers.Dense(128, activation='relu'),
 ]
+
+growth_no_growth = [ 
+        # Current working model for first line
+
+        data_augmentation, 
+        layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
+        layers.Cropping2D(),
+        layers.Conv2D(32, 3, activation='relu'),
+        layers.MaxPooling2D(),
+
+        layers.Conv2D(32, 3, kernel_initializer='he_uniform', activation='relu'), 
+        layers.MaxPooling2D(), 
+
+        layers.Conv2D(64, 3, kernel_initializer='he_uniform', activation='relu'), 
+        layers.MaxPooling2D(), 
+
+        layers.Flatten(),
+        layers.Dense(64, activation='relu')
+        #layers.Dropout(0.5), 
+        #layers.Dense(1, activation='sigmoid', bias_initializer = initial_bias)
+    ]

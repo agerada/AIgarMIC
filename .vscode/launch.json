@@ -34,15 +34,15 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "images/Plate7/2023-04-09/meropenem",
-                "-m",
-                "models_binary/growth_no_growth_2023-03-17",
-                "models_binary/growth_poor_growth",
+                "-m", 
+                "models/binary_first_500_its",
+                "models/binary_second",
                 "-t",
                 "binary",
+                "-s",
                 "-o",
-                "vo_final2.csv", 
-                "-c"
+                "binary_test.csv",
+                "plates/plate_9/"
             ]
         },
         {
@@ -80,6 +80,26 @@
             ]
         },
         {
+            "name": "Python: main.py softmax_6",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "-m",
+                "models/softmax_6",
+                "-t",
+                "softmax",
+                "-o",
+                "test.csv",
+                "-s",
+                "-n",
+                "0,1,2,3,4,5",
+                "plates/plate_9/"
+            ]
+        },
+        {
             "name": "Python: train_model.py",
             "type": "python",
             "request": "launch",
@@ -87,10 +107,13 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "annotations/binary",
-                "-v",
-                "-s",
-                "models/"
+                "-s", 
+                "models/binary_first_2/", 
+                "-l",
+                "-t",
+                "binary",
+                "annots_bin_fist/"
+
             ]
         },
         {

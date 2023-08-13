@@ -29,10 +29,9 @@ from file_handlers import create_dataset_from_directory, predict_images_from_dir
 
 from nn_design import *
 
-IMAGE_WIDTH = 100
-IMAGE_HEIGHT = 100
+IMAGE_WIDTH = 160
+IMAGE_HEIGHT = 160
 BATCH_SIZE = 64
-TYPE = "softmax"
 
 def main(): 
     parser = argparse.ArgumentParser("""
@@ -44,8 +43,10 @@ def main():
     parser.add_argument("-s", "--save", type=str, help="If specified, tensorflow model will be saved to this folder")
     parser.add_argument("-l", "--log", action="store_true", help="Store performance log in output folder")
     parser.add_argument("-t", "--test_dataset", type=str, help="Testing dataset for final model evaluation. Ideally unseen data. If not provided then input directory is used (whole dataset).")
+    parser.add_argument("-m","--model_type", type=str, default="softmax", help="Model type to train [default] = softmax")
     args = parser.parse_args()
 
+    TYPE = args.model_type
     ANNOTATIONS_FOLDER = args.annotations
 
     annotated_images = pathlib.Path(ANNOTATIONS_FOLDER)
@@ -122,7 +123,7 @@ def main():
             raise ValueError("Unknown TYPE")
         model.summary()
 
-        epochs=200
+        epochs=500
         history = model.fit(
             train_dataset,
             validation_data=val_dataset,

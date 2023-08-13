@@ -24,8 +24,8 @@ from model import SoftmaxModel, BinaryModel, BinaryNestedModel
 import sys
 
 def main(): 
-    MODEL_IMAGE_X = 100
-    MODEL_IMAGE_Y = 100
+    MODEL_IMAGE_X = 160
+    MODEL_IMAGE_Y = 160
     SUPPORTED_MODEL_TYPES = ['softmax', 'binary']
     parser = argparse.ArgumentParser(description="Main script to interpret agar dilution MICs",
                                      formatter_class=argparse.RawTextHelpFormatter)
@@ -43,7 +43,7 @@ def main():
     parser.add_argument("-o", "--output_file", type=str, help="Specify output file for csv report (will be overwritten)")
     parser.add_argument("-s", "--suppress_validation", action='store_true', help="Suppress manual validation prompts for annotations that have poor accuracy")
     parser.add_argument("-c", "--check_contours", action="store_true", help="Check contours visually")
-    parser.add_argument("-n", "--negative_codes", type=str, help="Comma-separated list of no growth class codes, e.g., 0,1 (default)")
+    parser.add_argument("-n", "--negative_codes", type=str, help="Comma-separated list of no growth class codes for softmax model, e.g., 0,1 (default)")
     args = parser.parse_args()
 
     plate_images_paths = get_paths_from_directory(args.directory)
@@ -95,17 +95,17 @@ def main():
         )
 
     if args.type_model == 'softmax':
-        class_names = ['0','1','2','3','4','5','6']
         # Since args.model is a list, unlist
         [path_to_model] = args.model
-        model = SoftmaxModel(path_to_model, class_names, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
-
+        model = SoftmaxModel(path_to_model, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+            
     elif args.type_model == 'binary': 
+        # currently only support hard-coded two step model
         class_names_first_line = ['No growth', 'Growth']
         class_names_second_line = ['Poor growth', 'Good growth']
-        first_line_model = BinaryModel(args.model[0], class_names_first_line, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
-        second_line_model = BinaryModel(args.model[1], class_names_second_line, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
-        model = BinaryNestedModel(first_line_model, second_line_model, first_model_accuracy_acceptance=0.6)
+        first_line_model = BinaryModel(args.model[0], key=class_names_first_line, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+        second_line_model = BinaryModel(args.model[1], key=class_names_second_line, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+        model = BinaryNestedModel(first_line_model, second_line_model, first_model_accuracy_acceptance=0.6, suppress_first_model_accuracy_check=True)
 
     else: 
         sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
