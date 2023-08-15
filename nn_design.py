@@ -37,14 +37,14 @@ growth_no_growth = [
 
         layers.Flatten(),
         layers.Dense(64, activation='relu'), 
-        layers.Dropout(0.5), 
+        layers.Dropout(0.1), 
         #layers.Dense(1, activation='sigmoid', bias_initializer = initial_bias)
     ]
 
 growth_poor_growth = [ 
         
         # Working model for second line
-        #data_augmentation,
+        data_augmentation,
         layers.Rescaling(1./255, input_shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)),
         layers.Conv2D(128, (3,3), activation='relu', padding='same'),
         layers.MaxPooling2D((2,2)),

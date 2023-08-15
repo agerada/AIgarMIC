@@ -28,6 +28,7 @@ from tensorflow.keras import initializers
 from file_handlers import create_dataset_from_directory, predict_images_from_directory
 
 from nn_design import *
+from utils import ValidationThresholdCallback
 
 IMAGE_WIDTH = 160
 IMAGE_HEIGHT = 160
@@ -70,7 +71,7 @@ def main():
     class_names = train_dataset.class_names
     num_classes = len(class_names)
 
-    model = Sequential(keras_model) 
+    model = Sequential(growth_no_growth) 
 
     if TYPE=="softmax":
         # Adjust class weights
@@ -114,7 +115,7 @@ def main():
         
     with tf.device('/device:GPU:0'):
         if TYPE=="binary":
-            model.compile(optimizer=keras.optimizers.legacy.RMSprop(learning_rate=.001),
+            model.compile(optimizer=keras.optimizers.legacy.Adam(learning_rate=.0001),
                 loss='binary_crossentropy',
                 metrics=['accuracy'])
         elif TYPE=="softmax":
@@ -123,12 +124,14 @@ def main():
             raise ValueError("Unknown TYPE")
         model.summary()
 
-        epochs=500
+        epochs = 300
+        val_callback = ValidationThresholdCallback(threshold=0.98)
         history = model.fit(
             train_dataset,
             validation_data=val_dataset,
             epochs=epochs, 
-            class_weight=class_weights
+            class_weight=class_weights,
+            callbacks=[val_callback]
         )
     
     results = model.evaluate(train_dataset, batch_size=BATCH_SIZE, verbose=0)

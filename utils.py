@@ -12,6 +12,7 @@ Documentation
 import cv2
 import numpy as np
 import os
+import tensorflow as tf
 
 def rectContour(contours):
     rectCon = []
@@ -100,3 +101,14 @@ def get_image_paths(dir):
             _temp_image_paths = [os.path.join(_parent_path, i) for i in _temp_image_paths]
             output[i] = _temp_image_paths
         return output
+
+
+class ValidationThresholdCallback(tf.keras.callbacks.Callback):
+    def __init__(self, threshold):
+        super().__init__()
+        self.threshold = threshold
+
+    def on_epoch_end(self, epoch, logs=None): 
+        val_acc = logs["val_accuracy"]
+        if val_acc >= self.threshold:
+            self.model.stop_training = True
