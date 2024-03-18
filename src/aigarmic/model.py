@@ -12,6 +12,7 @@ import tensorflow as tf
 import numpy as np 
 from utils import convertCV2toKeras
 
+
 class Model(): 
     def __init__(self, path, trained_x, trained_y, key=None): 
         """

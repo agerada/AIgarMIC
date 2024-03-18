@@ -10,7 +10,6 @@
 
 import os, cv2 
 import numpy as np
-import tensorflow as tf
 import matplotlib.pyplot as plt
 import argparse
 import pathlib
@@ -25,10 +24,9 @@ from tensorflow.keras import layers
 
 from sklearn.utils import class_weight
 from tensorflow.keras import initializers
-from file_handlers import create_dataset_from_directory, predict_images_from_directory
+from src.aigarmic.file_handlers import create_dataset_from_directory, predict_images_from_directory
 
-from nn_design import *
-from utils import ValidationThresholdCallback
+from src.aigarmic.utils import ValidationThresholdCallback
 
 IMAGE_WIDTH = 160
 IMAGE_HEIGHT = 160

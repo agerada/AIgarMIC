@@ -10,11 +10,10 @@
 
 import pickle, os, cv2 
 import numpy as np
-import tensorflow as tf
 import matplotlib.pyplot as plt
 import argparse
 import pathlib
-from utils import convertCV2toKeras
+from src.aigarmic import convertCV2toKeras
 
 import tensorflow as tf
 from tensorflow import keras

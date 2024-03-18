@@ -1,9 +1,4 @@
-from utils import get_conc_from_path
-from plate import *
-import cv2
-import csv
-
-test_plates = [ 
+test_plates = [
     Plate('genta', 128.), 
     Plate('genta', 64.), 
     Plate('genta', 32.), 

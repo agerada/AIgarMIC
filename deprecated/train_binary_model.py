@@ -10,20 +10,17 @@
 
 import pickle, os, cv2 
 import numpy as np
-import tensorflow as tf
 import matplotlib.pyplot as plt
 import argparse
 import pathlib
 import warnings
 import csv
-from utils import convertCV2toKeras
 
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
-from keras.regularizers import L2
-from file_handlers import create_dataset_from_directory, predict_images_from_directory
+from src.aigarmic import create_dataset_from_directory, predict_images_from_directory
 
 IMAGE_WIDTH = 160
 IMAGE_HEIGHT = 160

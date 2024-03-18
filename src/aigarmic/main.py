@@ -8,11 +8,7 @@
 
 """Script to process images"""
 
-import cv2
-from imutils import contours
-import numpy as np
 from process_plate_image import *
-import os
 from plate import Plate, PlateSet
 import tensorflow as tf
 import argparse
