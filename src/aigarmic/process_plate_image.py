@@ -18,7 +18,7 @@ def find_threshold_value(image: ndarray, start: int = 20,
                          end: int = 100,
                          by: int = 1,
                          look_for: int = 96,
-                         area_lower_bound: int = 1000) -> Union[tuple[list, int], tuple[None, None]]:
+                         area_lower_bound: int = 1000) -> Optional[tuple[list, int]]:
     """
     Find threshold value that correctly splits an agar plate image into colony sub-images. Assumes that a black grid
     overlays the image.
@@ -49,7 +49,7 @@ def find_threshold_value(image: ndarray, start: int = 20,
         # If we find the target boxes, return contours and threshold
         if len(grid_contours) == look_for:
             return grid_contours, i
-    return None, None
+    return None
 
 
 def split_by_grid(image: ndarray, n_rows: int = 8,
