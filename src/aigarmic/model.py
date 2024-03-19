@@ -32,8 +32,7 @@ class Model:
         :param key: key to interpret model output
         """
         self.path = path
-        self.keras_data = None
-        self.load_model(self.path)
+        self.keras_data = tf.keras.models.load_model(path)
         if key:
             self.key = key
         else:
@@ -80,7 +79,7 @@ class SoftmaxModel(Model):
     def predict(self, image: np.ndarray) -> dict:
         """
         Predict growth category from image
-        :param image: image loaded using cv2.imread
+        :param image: loaded using cv2.imread
         :return: dictionary with keys 'prediction', 'score', 'growth_code', 'growth', 'accuracy'
         """
         key = self.get_key()
@@ -160,7 +159,13 @@ class BinaryNestedModel:
         _key.insert(0, self.first_line_model.get_key()[0])
         self.key = _key
 
-    def predict(self, image):
+    def predict(self, image: np.ndarray) -> dict:
+        """
+        Predict colony growth from image
+
+        :param image: image loaded using cv2.imread
+        :return: dictionary with keys 'prediction', 'score', 'growth_code', 'growth', 'accuracy'
+        """
         first_line_classification = self.first_line_model.predict(image)
         if not self.suppress_first_model_accuracy_check and \
                 first_line_classification['accuracy'] < self.first_model_accuracy_acceptance:
@@ -177,5 +182,10 @@ class BinaryNestedModel:
                 second_line_classification['growth_code']]
             return second_line_classification
 
-    def get_key(self):
+    def get_key(self) -> list[str]:
+        """
+        Return key to convert model output to human-readable label
+        
+        :return: key (list of strings)
+        """
         return self.key

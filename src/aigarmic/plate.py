@@ -8,86 +8,133 @@
 
 """Class implementation for plates"""
 
-from process_plate_image import split_by_grid
-from dataclasses import dataclass
+from src.aigarmic.process_plate_image import split_by_grid
 from typing import Optional
 import cv2
-from random import choice, randrange
-from utils import convertCV2toKeras
-import tensorflow as tf
+from random import randrange
 import numpy as np
-import os 
+import os
 from string import ascii_uppercase
-from model import Model
+from src.aigarmic.model import Model
+from warnings import warn
+from src.aigarmic.utils import get_image_paths, get_conc_from_path
 
-@dataclass(order=True)
-class Plate: 
-    drug: str
-    concentration: float
-    image_path: Optional[str] = None
-    nrow: int = 8
-    ncol: int = 12
-    visualise_contours: bool = False
-    model: Model = None
 
-    def __post_init__(self): 
-        type_check_fields = ["concentration"]
-        for (name, field_type) in self.__annotations__.items(): 
-            if name in type_check_fields and not isinstance(self.__dict__[name], field_type):
-                current_type = type(self.__dict__[name])
-                raise TypeError(f"The field `{name}` was assigned with `{current_type}` instead of `{field_type}`")
-        
-        if not self.drug: 
-            self.drug = "unnamed_antibiotic"
+class Plate:
+    def __init__(self, drug: str,
+                 concentration: float,
+                 image_path: Optional[str] = None,
+                 n_row: int = 8,
+                 n_col: int = 12,
+                 visualise_contours: bool = False,
+                 model: Optional[Model] = None) -> None:
+        """
+        Store and process an agar plate image
+
+        :param drug: Antibiotic name
+        :param concentration: Antibiotic concentration
+        :param image_path: Path to the image
+        :param n_row: Number of rows in the plate
+        :param n_col: Number of columns in the plate
+        :param visualise_contours: Visualise the contours of the plate (useful for validation of grid splitting)
+        :param model: Model to use for predictions
+        """
+        self.drug = drug
+        self.concentration = concentration
+        self.image_path = image_path
+        self.n_row = n_row
+        self.n_col = n_col
+        self.accuracy_matrix = None
+        self.model = model
+        self.growth_code_matrix = None
+        self.growth_matrix = None
+        self.score_matrix = None
+        self.predictions_matrix = None
+        self.image_matrix = None
+        self.image = None
+        self.model_image_x = None
+        self.model_image_y = None
         
         if self.image_path: 
             self.image = cv2.imread(self.image_path)
-            self.image_matrix = split_by_grid(self.image, self.nrow, visualise_contours=self.visualise_contours, 
+            self.image_matrix = split_by_grid(self.image, self.n_row, visualise_contours=visualise_contours,
                                               plate_name=self.drug + '_' + str(self.concentration))
 
-    def split_images(self): 
-        self.image_matrix = split_by_grid(self.image, self.nrow, 
-                                          visualise_contours=self.visualise_contours, 
+    def split_images(self, visualise_contours: bool = False) -> None:
+        """
+        Splits images into individual colony images using grid
+
+        :param visualise_contours: Visualise the contours of the plate (useful for validation of grid splitting)
+        """
+        self.image_matrix = split_by_grid(self.image, self.n_row,
+                                          visualise_contours=visualise_contours,
                                           plate_name=self.drug + '_' + str(self.concentration))
 
-    def import_image(self, image): 
+    def import_image(self, image: np.ndarray) -> None:
+        """
+        Import and save image of agar plate
+
+        :param image: loaded using cv2.imread
+        """
         self.image = image
 
-    def get_colony_image(self, index = None):
+    def get_colony_image(self, index: Optional[tuple[int, int]] = None) -> tuple[np.ndarray, str]:
         """
-        Pulls colony image and associated codestamp
-        If no index is provided (default) a random image is given
-        """
-        if index: 
-            try: 
-                i,j = index
-                image = self.image_matrix[i][j]
-            except Exception as e: 
-                print(f"Invalid index provided to get_colony_image: {index}")                 
-                print(e)
-        else: 
-            i = randrange(self.nrow)
-            j = randrange(self.ncol)
-            image = self.image_matrix[i][j]
-        code = self.drug + "_" + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
-        return image,code
+        Pulls colony image and associated code-stamp
+        Code-stamps are strings containing, in sequence:
+        - Antibiotic name
+        - Antibiotic concentration
+        - Row (i) index
+        - Column (j) index
 
-    def link_model(self, model): 
+        If no index is provided (default) a random image is given
+
+        @param index: tuple of row and column index
+        @return: tuple of image and code-stamp (e.g., "drug_0.125_i_1_j_2")
+        """
+        if index is None:
+            i = randrange(self.n_row)
+            j = randrange(self.n_col)
+            image = self.image_matrix[i][j]
+        else:
+            try:
+                i, j = index
+                image = self.image_matrix[i][j]
+            except KeyError as e:
+                print(f"Invalid index provided to get_colony_image: {index}")
+                print(e)
+                raise e
+        code = self.drug + "_" + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
+        return image, code
+
+    def link_model(self, model: Model) -> None:
         """
         model_image_x and model_image_y are the pixel dimensions used to train the model
         """
         print(f"linking model to plate {self.concentration}")
         self.model = model
-        self.model_image_x = model.model_image_x
-        self.model_image_y = model.model_image_y
+        self.model_image_x = model.trained_x
+        self.model_image_y = model.trained_y
 
-    def get_model_key(self): 
+    def get_model_key(self) -> list[str]:
+        """
+        Get key from linked Model
+
+        :raises: LookupError: No linked model to get key from
+        :return: Key
+        """
         if not self.model: 
             raise LookupError("No linked model to get key from.")
         else: 
             return self.model.get_key()
         
-    def annotate_images(self, model=None): 
+    def annotate_images(self, model: Optional[Model]) -> list[list[str]]:
+        """
+        Annotate plate images
+
+        :param model: linked model to use for predictions
+        :return: Two-dimensional list of growth annotations
+        """
         print(f"annotating plate images - {self.concentration}")
         if not self.image_matrix: 
             raise LookupError(
@@ -133,7 +180,10 @@ class Plate:
             temp_growth_code_rows = []
         return self.growth_matrix
 
-    def print_matrix(self): 
+    def print_matrix(self) -> None:
+        """
+        Print growth matrix in human-readable format
+        """
         if not self.growth_matrix: 
             print(f"Plate {self.drug} - {self.concentration} not annotated")
         else: 
@@ -143,25 +193,44 @@ class Plate:
                     print(" ", end="", sep="")
                 print()
 
-    def get_inaccurate_images(self, threshold = .9): 
+    def get_inaccurate_images(self, threshold: float = .9) -> set[tuple[int, int]]:
+        """
+        Get indexes of images with prediction accuracy below threshold
+        :param threshold: Prediction threshold
+        :return: Set containing indices of inaccurate images
+        """
         output = set()
-        for i,row in enumerate(self.accuracy_matrix): 
-            for j,item in enumerate(row): 
+        for i, row in enumerate(self.accuracy_matrix):
+            for j, item in enumerate(row):
                 if item < threshold: 
-                    output.add((i,j))
+                    output.add((i, j))
         return output
     
-    def review_poor_images(self, threshold = .9, save_dir = None): 
+    def review_poor_images(self, threshold: float = .9,
+                           save_dir: str = None) -> list[tuple[int, int]]:
+        """
+        Review and re-classify images with prediction accuracy below threshold. Currently, only supports three levels,
+        0 (no growth), 1 (poor growth), 2 (good growth), as described in Gerada et al. (2024), Microbiology Spectrum.
+        If save_dir provided then colony images will also be saved to a subdirectory (named after the new
+        classification), to allow for future use in training.
+
+        Enter new classification for each image using 0/1/2 on keyboard, or press enter (or esc) to skip.
+
+        :param threshold: Prediction threshold to identify inaccurate images
+        :param save_dir: Directory to save re-classified images
+        :return: List of indices of re-classified images
+        """
         codes = {48: 0, 49: 1, 50: 2, 27: "esc", 13: "enter"}
         inaccurate_images_indexes = self.get_inaccurate_images(threshold) 
         changed_log = []
         for image_index in inaccurate_images_indexes: 
-            image,stamp = self.get_colony_image(image_index)
-            i,j = image_index
+            image, stamp = self.get_colony_image(image_index)
+            i, j = image_index
             growth = self.growth_matrix[i][j]
             accuracy = self.accuracy_matrix[i][j]
             print()
-            print(f"This image ({self.drug + str(self.concentration)} position {i} {j}) was labelled as {growth} with an accuracy of {accuracy * 100:.2f}")
+            print(f"This image ({self.drug + str(self.concentration)} position {i} {j}) was labelled as {growth} "
+                  f"with an accuracy of {accuracy * 100:.2f}")
             cv2.imshow(self.drug + str(self.concentration) + f" position {i} {j}", image)
             print("Press enter to continue, or enter new classification: ")
             while True: 
@@ -192,17 +261,55 @@ class Plate:
                     save_path = os.path.join(class_dir, stamp + ".jpg")
                     print(f"Saving image to: {save_path}")
                     cv2.imwrite(save_path, image)
-        return changed_log # return list of changed indexes
-        
+        return changed_log
+
+    def __repr__(self) -> str:
+        return f"Plate of {self.drug} at {self.concentration}mg/L"
+
+    def __lt__(self, other) -> bool:
+        return self.concentration < other.concentration
+
+    def __eq__(self, other) -> bool:
+        return self.concentration == other.concentration and self.drug == other.drug
+
+    def __gt__(self, other) -> bool:
+        return self.concentration > other.concentration
+
+    def __le__(self, other) -> bool:
+        return self.concentration <= other.concentration
+
+    def __ge__(self, other) -> bool:
+        return self.concentration >= other.concentration
+
+    def __ne__(self, other) -> bool:
+        return self.concentration != other.concentration
+
+    def __hash__(self) -> int:
+        return hash((self.drug, self.concentration))
+
+
 class PlateSet: 
-    def __init__(self, plates_list) -> None:
-        if not plates_list: 
+    def __init__(self, plates_list: list[Plate]) -> None:
+        """
+        Combines a list of Plate objects into a PlateSet to facilitate MIC calculation.
+        Generally, plates would have a range of antimicrobial concentrations, including a control plate (concentration
+        of 0.0mg/L).
+        Plates must be annotated before initialisation (using Plate.annotate_images()) and have the same antimicrobial
+        name and growth keys.
+
+        :param plates_list: List of Plate objects
+        """
+        self.qc_matrix = None
+        self.no_growth_names = None
+        self.mic_matrix = None
+
+        if not plates_list:
             raise ValueError("Supply list of plates to create PlateSet")
         if any([not plate.growth_matrix for plate in plates_list]): 
             raise ValueError("Please run annotate_images() on plates before initialising PlateSet")
 
         _list_of_keys = [i.get_model_key() for i in plates_list]
-        if not all(i==_list_of_keys[0] for i in _list_of_keys): 
+        if not all(i == _list_of_keys[0] for i in _list_of_keys):
             raise ValueError("Plates supplied to PlateSet have different growth keys")
         if not _list_of_keys: 
             raise ValueError("Plates supplied to PlateSet do not have associated key")
@@ -212,42 +319,59 @@ class PlateSet:
             raise ValueError("Plates supplied to PlateSet have different antibiotic names")
         elif not len(set(drug_names)): 
             raise ValueError("Plates supplied to PlateSet do not have antibiotic names")
-        else: 
-            self.drug = plates_list[0].drug
-            self.antibiotic_plates = [i for i in plates_list if i.concentration != 0.0]
-            try: 
-                _temp_positive_control_plate = [i for i in plates_list if i.concentration == 0.0]
-                [self.positive_control_plate] = _temp_positive_control_plate
-            except: 
-                if not _temp_positive_control_plate: 
-                    print(f"*Warning* - no control plate supplied to {self.drug} PlateSet")
-                else: 
-                    print(f"*Warning* - multiple control plates supplied to {self.drug} PlateSet, control plates will be skipped.")
-            self.antibiotic_plates = sorted(self.antibiotic_plates)
-            self.key = self.antibiotic_plates[0].get_model_key()
+
+        self.drug = plates_list[0].drug
+        self.antibiotic_plates = [i for i in plates_list if i.concentration != 0.0]
+
+        _temp_positive_control_plate = [i for i in plates_list if i.concentration == 0.0]
+        if not _temp_positive_control_plate:
+            warn(f"No control plate supplied to {self.drug} PlateSet")
+        if len(_temp_positive_control_plate) > 1:
+            warn(f"Multiple control plates supplied to {self.drug} PlateSet, control plates will be skipped.")
+        else:
+            [self.positive_control_plate] = _temp_positive_control_plate
+
+        self.antibiotic_plates = sorted(self.antibiotic_plates)
+        self.key = self.antibiotic_plates[0].get_model_key()
 
         # check dimensions of plates' matrices
         if not self.valid_dimensions(): 
             raise ValueError("Plate matrices have different dimensions - unable to calculate MIC")
 
-    def valid_dimensions(self): 
+    def valid_dimensions(self) -> bool:
+        """
+        Check if all plates in PlateSet have the same x and y dimensions
+
+        :return: True if all plates have the same dimensions, False otherwise
+        """
         matrices_array = [np.array(p.growth_matrix) for p in self.antibiotic_plates]
         matrices_shapes = [i.shape for i in matrices_array]
-        return True if all(i==matrices_shapes[0] for i in matrices_shapes) else False
+        return True if all(i == matrices_shapes[0] for i in matrices_shapes) else False
 
-    def get_all_plates(self): 
+    def get_all_plates(self) -> list[Plate]:
+        """
+        Returns a sorted list of all plates in the PlateSet, including the control plate
+
+        :return: List of Plate objects
+        """
         return sorted(self.antibiotic_plates + [self.positive_control_plate])
     
-    def convert_mic_matrix(self, format = str): 
-        allowed_formats = (str, float)
-        if format not in allowed_formats: 
+    def convert_mic_matrix(self, mic_format: str = "string") -> np.array:
+        """
+        Converts format of MIC matrix
+
+        :param mic_format: Format to convert to ("string" or "float")
+        :return: matrix (array) of MIC values
+        """
+        allowed_formats = ("string", "float")
+        if mic_format not in allowed_formats:
             raise ValueError(f"MIC matrix formats must be one of: {allowed_formats}")
-        output = self.mic_matrix.astype(format)
-        if format == str: 
+        output = self.mic_matrix.astype(mic_format)
+        if mic_format == "string":
             max_mic_plate = max([i.concentration for i in self.antibiotic_plates])
             min_mic_plate = min([i.concentration for i in self.antibiotic_plates])
-            for i,row in enumerate(output): 
-                for j,mic in enumerate(row): 
+            for i, row in enumerate(output):
+                for j, mic in enumerate(row):
                     if float(mic) > max_mic_plate: 
                         output[i][j] = ">" + str(max_mic_plate)
                     elif float(mic) == min_mic_plate: 
@@ -256,56 +380,65 @@ class PlateSet:
                         output[i][j] = mic
         return output
 
-    def calculate_MIC(self, format = str, no_growth_key_items = (0,1)): 
+    def calculate_mic(self, no_growth_key_items: tuple[int, int] = (0, 1)) -> np.array:
+        """
+        Calculate MIC matrix using image predictions.
+        Sets self.mic_matrix
+
+        :param no_growth_key_items: tuple of key items that should be classified as "no growth" for MIC purposes
+        :return: MIC matrix
+        """
         _no_growth_names = [self.key[i] for i in no_growth_key_items]
         self.no_growth_names = _no_growth_names
         self.antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
-        max_conc = max([i.concentration for i in self.antibiotic_plates])*2
+        max_concentration = max([i.concentration for i in self.antibiotic_plates])*2
         mic_matrix = np.array(self.antibiotic_plates[0].growth_matrix)
         mic_matrix = np.full(mic_matrix.shape, max([i.concentration for i in self.antibiotic_plates])*2)
-        #mic_matrix = np.zeros_like(self.antibiotic_plates[0].growth_matrix)
         rows = range(mic_matrix.shape[0])
         cols = range(mic_matrix.shape[1])
 
-        def get_first_negative_conc(starting_conc, row, col):
-            if self.antibiotic_plates[0].growth_matrix[row][col] not in self.no_growth_names:
-                return starting_conc
-            i_conc = self.antibiotic_plates[0].concentration
+        def get_first_negative_concentration(starting_concentration, i, j):
+            if self.antibiotic_plates[0].growth_matrix[i][j] not in self.no_growth_names:
+                return starting_concentration
+            c = self.antibiotic_plates[0].concentration
             for plate in self.antibiotic_plates[1:]:
-                if plate.growth_matrix[row][col] not in self.no_growth_names:
-                    return i_conc
+                if plate.growth_matrix[i][j] not in self.no_growth_names:
+                    return c
                 else:
-                    i_conc = plate.concentration
-            return i_conc
-        """
-            for plate in self.antibiotic_plates:
-                if plate.growth_matrix[row][col] not in self.no_growth_names:
-                    return starting_conc
-                if plate.growth_matrix[row][col] in self.no_growth_names:
-                    return plate.concentration
-                return plate.concentration
-        """
+                    c = plate.concentration
+            return c
             
         for row in rows:
             for col in cols:
-                mic_matrix[row][col] = get_first_negative_conc(max_conc, row, col)
+                mic_matrix[row][col] = get_first_negative_concentration(max_concentration, row, col)
         self.mic_matrix = mic_matrix
         return mic_matrix
-    
-    def generate_QC(self): 
+
+    def generate_qc(self) -> np.array:
+        """
+        Generate QC matrix for PlateSet, as follows:
+
+        "F" = FAIL - no growth in positive control plate, result should be disregarded
+        "W" = WARNING - more than one change in concentration gradient. There should only be one change at the MIC
+        breakpoint (where the images change from growth to no/poor growth). Depending on the application of the results,
+        manual confirmation should be considered for warnings.
+        "P" = PASS - no QC issues found
+
+        :return: Matrix of QC values (strings)
+        """
         qc_matrix = np.full(self.mic_matrix.shape, fill_value="", dtype=str)
 
-        try:
-            for i,row in enumerate(self.positive_control_plate.growth_matrix): 
-                for j,item in enumerate(row): 
-                    if item in self.no_growth_names: 
-                        qc_matrix[i][j] = "F"
-                    else: 
-                        qc_matrix[i][j] = "P"
-        except: 
+        if self.positive_control_plate is None:
             print(f"*Warning* - {repr(self)} does not contain a positive control plate.")
             print("QC not valid.")
-        
+        else:
+            for i, row in enumerate(self.positive_control_plate.growth_matrix):
+                for j, item in enumerate(row):
+                    if item in self.no_growth_names:
+                        qc_matrix[i][j] = "F"
+                    else:
+                        qc_matrix[i][j] = "P"
+
         def remove_ones(code): 
             return 0 if code in self.no_growth_names else code
         
@@ -316,7 +449,7 @@ class PlateSet:
             for i in rows: 
                 for j in cols: 
                     previous_growth_code = remove_ones(antibiotic_plates[0].growth_code_matrix[i][j])
-                    flipped = False # we only allow one "flip" from no growth -> growth
+                    flipped = False  # we only allow one "flip" from no growth -> growth
                     for k in antibiotic_plates[1:]: 
                         next_growth_code = remove_ones(k.growth_code_matrix[i][j])
                         if next_growth_code < previous_growth_code: 
@@ -328,27 +461,57 @@ class PlateSet:
                                 qc_matrix[i][j] = "W"
                         previous_growth_code = next_growth_code
         else: 
-            print(f"*Warning* - {repr(self)} has insufficient plates for QC")
+            print(f"*Warning* - {repr(self)} has insufficient plates for full QC")
         self.qc_matrix = qc_matrix
         return qc_matrix
 
-    def review_poor_images(self, threshold = .9, save_dir = None): 
+    def review_poor_images(self, threshold: float = .9,
+                           save_dir: Optional[str] = None) -> list[list[tuple[int, int]]]:
+        """
+        Review and re-classify images with prediction accuracy below threshold. Currently, only supports three levels,
+        0 (no growth), 1 (poor growth), 2 (good growth), as described in Gerada et al. (2024), Microbiology Spectrum.
+        If save_dir provided then colony images will also be saved to a subdirectory (named after the new
+        classification), to allow for future use in training.
+
+        Enter new classification for each image using 0/1/2 on keyboard, or press enter (or esc) to skip.
+
+        :param threshold: Prediction threshold to identify inaccurate images
+        :param save_dir: Directory to save re-classified images
+        :return: List of indices of re-classified images
+        """
         changed = [i.review_poor_images(threshold, save_dir) for i in self.get_all_plates()]
         print(f"{len(changed)} images re-classified.")
+        return changed
 
-    def get_csv_data(self, format="l"): 
-        mic_matrix_str = self.convert_mic_matrix(str)
-        if format == 'l': 
-            row_letters = ascii_uppercase[0:len(mic_matrix_str)]
-            col_nums = [i + 1 for i in range(len(mic_matrix_str[0]))]
-            output = []
-            for i in range(len(row_letters)): 
-                for j in range(len(col_nums)): 
-                    position = row_letters[i]+str(col_nums[j])
-                    mic = mic_matrix_str[i][j]
-                    qc = self.qc_matrix[i][j]
-                    output.append({'Antibiotic': self.drug, 'Position': position, 'MIC': mic, 'QC': qc})
-            return output
+    def get_csv_data(self) -> list[dict]:
+        """
+        Get MIC and QC data in a format suitable for CSV export:
+        List of dicts containing:
+        - Antibiotic: Antibiotic name
+        - Position: Position of the colony (e.g., A1, B2, etc.)
+        - MIC: MIC value
+        - QC: QC value (P, W, F)
+
+        :return: List of dicts with MIC and QC data
+        """
+        mic_matrix_str = self.convert_mic_matrix(mic_format="string")
+        row_letters = ascii_uppercase[0:len(mic_matrix_str)]
+        col_nums = [i + 1 for i in range(len(mic_matrix_str[0]))]
+        output = []
+        for i in range(len(row_letters)):
+            for j in range(len(col_nums)):
+                position = row_letters[i]+str(col_nums[j])
+                mic = mic_matrix_str[i][j]
+                qc = self.qc_matrix[i][j]
+                output.append({'Antibiotic': self.drug, 'Position': position, 'MIC': mic, 'QC': qc})
+        return output
         
     def __repr__(self) -> str:
-        return f"PlateSet of {self.drug} with {len(self.antibiotic_plates)} concentrations: {[i.concentration for i in self.antibiotic_plates]}"
+        return (f"PlateSet of {self.drug} with {len(self.antibiotic_plates)} "
+                f"concentrations: {[i.concentration for i in self.antibiotic_plates]}")
+
+
+def plate_set_from_dir(path: str, drug: str, **kwargs) -> PlateSet:
+    image_paths = get_image_paths(path)
+    plates = [Plate(drug, get_conc_from_path(i), i, **kwargs) for i in image_paths]
+    return PlateSet(plates)
