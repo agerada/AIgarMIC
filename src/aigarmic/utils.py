@@ -81,7 +81,7 @@ def keras_image_to_cv2(image):
     cv2.imshow("test",img) 
     cv2.waitKey()
 
-def get_image_paths(dir): 
+def get_image_paths(dir, extensions=('.jpg', '.JPG')):
     """
     If there are no subdirectories in dir, returns a list of image paths
     If there are subdirectories, returns a dict of 'subdir_name': 'path'
@@ -91,13 +91,13 @@ def get_image_paths(dir):
                 os.path.isdir(os.path.join(dir,i))]
     
     if not subdirs: 
-        return [os.path.join(dir,i) for i in os.listdir(dir)]
+        return [os.path.join(dir,i) for i in os.listdir(dir) if i.endswith(tuple(extensions))]
     else: 
         output = {}
         for i in subdirs: 
             _parent_path = os.path.join(dir, i)
             _temp_image_paths = os.listdir(_parent_path)
-            _temp_image_paths = [i for i in _temp_image_paths if i.count('.jpg') > 0 or i.count('.JPG') > 0]
+            _temp_image_paths = [i for i in _temp_image_paths if i.endswith(tuple(extensions))]
             _temp_image_paths = [os.path.join(_parent_path, i) for i in _temp_image_paths]
             output[i] = _temp_image_paths
         return output

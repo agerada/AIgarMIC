@@ -128,7 +128,7 @@ class Plate:
         else: 
             return self.model.get_key()
         
-    def annotate_images(self, model: Optional[Model]) -> list[list[str]]:
+    def annotate_images(self, model: Optional[Model] = None) -> list[list[str]]:
         """
         Annotate plate images
 
@@ -364,9 +364,11 @@ class PlateSet:
         :return: matrix (array) of MIC values
         """
         allowed_formats = ("string", "float")
+        format_conversion = {"string": str, "float": float}
+
         if mic_format not in allowed_formats:
             raise ValueError(f"MIC matrix formats must be one of: {allowed_formats}")
-        output = self.mic_matrix.astype(mic_format)
+        output = self.mic_matrix.astype(format_conversion[mic_format])
         if mic_format == "string":
             max_mic_plate = max([i.concentration for i in self.antibiotic_plates])
             min_mic_plate = min([i.concentration for i in self.antibiotic_plates])
@@ -494,6 +496,11 @@ class PlateSet:
 
         :return: List of dicts with MIC and QC data
         """
+        if self.mic_matrix is None:
+            raise ValueError("Please calculate MIC using PlateSet.calculate_mic() before exporting data")
+        if self.qc_matrix is None:
+            raise ValueError("Please generate QC using PlateSet.generate_qc() before exporting data")
+
         mic_matrix_str = self.convert_mic_matrix(mic_format="string")
         row_letters = ascii_uppercase[0:len(mic_matrix_str)]
         col_nums = [i + 1 for i in range(len(mic_matrix_str[0]))]
@@ -511,7 +518,11 @@ class PlateSet:
                 f"concentrations: {[i.concentration for i in self.antibiotic_plates]}")
 
 
-def plate_set_from_dir(path: str, drug: str, **kwargs) -> PlateSet:
+def plate_set_from_dir(path: str, drug: str, model: Model, **kwargs) -> PlateSet:
     image_paths = get_image_paths(path)
-    plates = [Plate(drug, get_conc_from_path(i), i, **kwargs) for i in image_paths]
-    return PlateSet(plates)
+    plates = [Plate(drug, get_conc_from_path(i), i, model=model, **kwargs) for i in image_paths]
+    [i.annotate_images() for i in plates]
+    output = PlateSet(plates)
+    output.calculate_mic()
+    output.generate_qc()
+    return output
