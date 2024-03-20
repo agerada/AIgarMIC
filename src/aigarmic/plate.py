@@ -388,8 +388,14 @@ class PlateSet:
 
         :return: True if all plates have the same dimensions, False otherwise
         """
-        matrices_array = [np.array(p.growth_matrix) for p in self.antibiotic_plates]
-        matrices_shapes = [i.shape for i in matrices_array]
+        matrices_shapes = []
+        for i in self.get_all_plates():
+            try:
+                matrices_shapes.append(np.shape(i.growth_code_matrix))
+            except ValueError as e:
+                print(e)
+                raise ValueError(f"Plate {i} does not a matrix-shaped growth code matrix")
+
         return True if all(i == matrices_shapes[0] for i in matrices_shapes) else False
 
     def get_all_plates(self) -> list[Plate]:

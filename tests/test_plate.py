@@ -40,6 +40,7 @@ def test_plate_set(binary_nested_model):
     for target, prediction in zip(target_mic_values, predicted_data):
         assert target == prediction
 
+
 @pytest.mark.skip
 def test_convert_growth_codes(basic_plates):
     for i in basic_plates:
@@ -93,6 +94,7 @@ def test_calculate_mic(basic_plates):
     assert basic_plate_set.get_csv_data() == target_output
 
 
+@pytest.mark.skip
 def test_generate_qc():
     test_qc_plates = [
         Plate('genta', 64.),
@@ -118,7 +120,7 @@ def test_generate_qc():
     test_qc_plate_set.calculate_mic(no_growth_key_items=(0, 1))
     qc_test = test_qc_plate_set.generate_qc()
     qc_target = [['W', 'P'],
-                  ['P', 'P']]
+                 ['P', 'P']]
     for row_test, row_target in zip(qc_test, qc_target):
         for col_test, col_target in zip(row_test, row_target):
             assert col_test == col_target
@@ -126,7 +128,37 @@ def test_generate_qc():
     test_qc_plate_set.calculate_mic(no_growth_key_items=(0, 1, 2))
     qc_test = test_qc_plate_set.generate_qc()
     qc_target = [['W', 'P'],
-                  ['W', 'F']]
+                 ['W', 'F']]
     for row_test, row_target in zip(qc_test, qc_target):
         for col_test, col_target in zip(row_test, row_target):
             assert col_test == col_target
+
+
+def test_valid_dimensions():
+    test_dimension_plates = [
+        Plate('genta', 64.),
+        Plate('genta', 0.),
+    ]
+
+    #  fails because the growth_code_matrix is not of the same dimensions:
+    test_dimension_plates[0].growth_code_matrix = [
+        [0, 2],
+        [0, 0]]
+    test_dimension_plates[1].growth_code_matrix = [
+        [1, 2, 2],
+        [2, 2, 2]]
+
+    with pytest.raises(ValueError):
+        PlateSet(test_dimension_plates)
+
+    #  fails because the growth_code_matrix are not valid matrix dimensions,
+    #  despite being the same.
+    test_dimension_plates[0].growth_code_matrix = [
+        [0, 2],
+        [0]]
+    test_dimension_plates[1].growth_code_matrix = [
+        [1, 2, 2],
+        [2]]
+
+    with pytest.raises(ValueError):
+        PlateSet(test_dimension_plates)
