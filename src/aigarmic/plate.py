@@ -138,8 +138,10 @@ class Plate:
         """
         if self.key is not None:
             return self.key
-        else:
+        elif self.model is not None:
             return self.model.get_key()
+        else:
+            return None
 
     def set_key(self, key: list[str]) -> None:
         """
@@ -332,7 +334,8 @@ class Plate:
 
 
 class PlateSet: 
-    def __init__(self, plates_list: list[Plate]) -> None:
+    def __init__(self, plates_list: list[Plate],
+                 key: Optional[list[str]] = None) -> None:
         """
         Combines a list of Plate objects into a PlateSet to facilitate MIC calculation.
         Generally, plates would have a range of antimicrobial concentrations, including a control plate (concentration
@@ -346,17 +349,15 @@ class PlateSet:
         self.qc_matrix = None
         self.mic_matrix = None
 
-        if not plates_list:
-            raise ValueError("Supply list of plates to create PlateSet")
-        if any([not plate.growth_matrix for plate in plates_list]): 
-            raise ValueError("Please run annotate_images() on plates before initialising PlateSet")
-
+        if key is not None:
+            self.key = key
         _list_of_keys = [i.get_key() for i in plates_list]
         if not all(i == _list_of_keys[0] for i in _list_of_keys):
             raise ValueError("Plates supplied to PlateSet have different growth keys")
         if not _list_of_keys:
             raise ValueError("Plates supplied to PlateSet do not have associated key")
-        self.key = _list_of_keys[0]
+        if key is None:
+            self.key = _list_of_keys[0]
 
         drug_names = [i.drug for i in plates_list]
         if len(set(drug_names)) > 1:
@@ -425,7 +426,7 @@ class PlateSet:
                         output[i][j] = mic
         return output
 
-    def calculate_mic(self, no_growth_key_items: tuple[int, int] = (0, 1)) -> np.array:
+    def calculate_mic(self, no_growth_key_items: tuple[int, ...] = (0, 1)) -> np.array:
         """
         Calculate MIC matrix using image predictions.
         Sets self.mic_matrix
@@ -433,11 +434,10 @@ class PlateSet:
         :param no_growth_key_items: tuple of key items that should be classified as "no growth" for MIC purposes
         :return: MIC matrix
         """
-        _no_growth_names = [self.key[i] for i in no_growth_key_items]
         self.no_growth_key_items = no_growth_key_items
         self.antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
         max_concentration = max([i.concentration for i in self.antibiotic_plates])*2
-        mic_matrix = np.array(self.antibiotic_plates[0].growth_matrix)
+        mic_matrix = np.array(self.antibiotic_plates[0].growth_code_matrix)
         mic_matrix = np.full(mic_matrix.shape, max([i.concentration for i in self.antibiotic_plates])*2)
         rows = range(mic_matrix.shape[0])
         cols = range(mic_matrix.shape[1])
@@ -471,6 +471,8 @@ class PlateSet:
 
         :return: Matrix of QC values (strings)
         """
+        if self.mic_matrix is None:
+            raise ValueError(f"MIC matrix not found for {repr(self)} - please calculate MIC using calculate_mic()")
         qc_matrix = np.full(self.mic_matrix.shape, fill_value="", dtype=str)
 
         if self.positive_control_plate is None:
@@ -484,28 +486,27 @@ class PlateSet:
                     else:
                         qc_matrix[i][j] = "P"
 
-        def remove_ones(code): 
-            return 0 if code in self.no_growth_key_items else code
+        def simplify_codes(code):
+            return 0 if code in self.no_growth_key_items else 1
         
         antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
         if len(antibiotic_plates) > 1: 
             rows = range(qc_matrix.shape[0])
             cols = range(qc_matrix.shape[1])
             for i in rows: 
-                for j in cols: 
-                    previous_growth_code = remove_ones(antibiotic_plates[0].growth_code_matrix[i][j])
-                    flipped = False  # we only allow one "flip" from no growth -> growth
-                    for k in antibiotic_plates[1:]: 
-                        next_growth_code = remove_ones(k.growth_code_matrix[i][j])
-                        if next_growth_code < previous_growth_code: 
-                            qc_matrix[i][j] = "W"
-                        if next_growth_code != previous_growth_code: 
-                            if not flipped: 
-                                flipped = True
-                            else: 
-                                qc_matrix[i][j] = "W"
+                for j in cols:
+                    if qc_matrix[i][j] == "F":
+                        continue
+                    previous_growth_code = simplify_codes(antibiotic_plates[0].growth_code_matrix[i][j])
+                    flips = 0  # we only allow one "flip" from no growth -> growth
+                    for k in antibiotic_plates[1:]:
+                        next_growth_code = simplify_codes(k.growth_code_matrix[i][j])
+                        if next_growth_code != previous_growth_code:
+                            flips += 1
                         previous_growth_code = next_growth_code
-        else: 
+                    if flips > 1:
+                        qc_matrix[i][j] = "W"
+        else:
             print(f"*Warning* - {repr(self)} has insufficient plates for full QC")
         self.qc_matrix = qc_matrix
         return qc_matrix
