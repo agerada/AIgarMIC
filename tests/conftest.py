@@ -11,10 +11,10 @@ COLONY_IMAGE_PATH = "../images/single_colony.jpg"
 NO_COLONY_IMAGE_PATH = "../images/single_no_growth.jpg"
 POOR_GROWTH_IMAGE_PATH = "../images/single_poor_growth.jpg"
 IMAGES_PATH = "../images/"
-DRUG_NAME = "ceftazidime"
+DRUG_NAME = "amikacin"
 MIN_CONCENTRATION = 0.0
 MAX_CONCENTRATION = 64.0
-TARGET_MIC_CSV = "../images/ceftazidime/ceftazidime_target.csv"
+TARGET_MIC_CSV = "../images/amikacin/amikacin_target_spectrum_model.csv"
 MIC_PLATES_PATH = path.join(IMAGES_PATH, DRUG_NAME)
 
 
@@ -63,3 +63,35 @@ def plates_images_paths():
 def plates_list(plates_images_paths):
     return [Plate(DRUG_NAME, get_conc_from_path(i), i, visualise_contours=False) for i in plates_images_paths]
 
+
+@pytest.fixture
+def basic_plates():
+    """
+    Creates a basic set of plates without using images, to support testing of PlateSet logic.
+    """
+    output = [
+        Plate('genta', 128.),
+        Plate('genta', 64.),
+        Plate('genta', 32.),
+        Plate('genta', 16.),
+        Plate('genta', 0.),
+    ]
+
+    output[0].growth_code_matrix = [
+        [0, 2],
+        [0, 0]]
+    output[1].growth_code_matrix = [
+        [1, 2],
+        [2, 0]]
+    output[2].growth_code_matrix = [
+        [2, 2],
+        [1, 0]]
+    output[3].growth_code_matrix = [
+        [2, 2],
+        [2, 0]]
+
+    output[4].growth_code_matrix = [
+        [2, 2],
+        [2, 0]]
+
+    return output

@@ -27,7 +27,8 @@ class Plate:
                  n_row: int = 8,
                  n_col: int = 12,
                  visualise_contours: bool = False,
-                 model: Optional[Model] = None) -> None:
+                 model: Optional[Model] = None,
+                 key: Optional[list[str]] = None) -> None:
         """
         Store and process an agar plate image
 
@@ -38,6 +39,7 @@ class Plate:
         :param n_col: Number of columns in the plate
         :param visualise_contours: Visualise the contours of the plate (useful for validation of grid splitting)
         :param model: Model to use for predictions
+        :param key: Key to interpret model output (try to infer from model if not provided)
         """
         self.drug = drug
         self.concentration = concentration
@@ -46,6 +48,17 @@ class Plate:
         self.n_col = n_col
         self.accuracy_matrix = None
         self.model = model
+        self.key = None
+
+        if key is not None:
+            if self.model is not None and self.model.get_key() != key:
+                warn(f"Key provided to Plate does not match linked model key: {key} vs {self.model.get_key()}")
+                warn(f"Plate will be using key parameter: {key}")
+            self.key = key
+        else:
+            if self.model is not None:
+                self.key = self.model.get_key()
+
         self.growth_code_matrix = None
         self.growth_matrix = None
         self.score_matrix = None
@@ -116,18 +129,31 @@ class Plate:
         self.model_image_x = model.trained_x
         self.model_image_y = model.trained_y
 
-    def get_model_key(self) -> list[str]:
+    def get_key(self) -> Optional[list[str]]:
         """
         Get key from linked Model
 
         :raises: LookupError: No linked model to get key from
-        :return: Key
+        :return: Key (or None if one is not found)
         """
-        if not self.model: 
-            raise LookupError("No linked model to get key from.")
-        else: 
+        if self.key is not None:
+            return self.key
+        else:
             return self.model.get_key()
-        
+
+    def set_key(self, key: list[str]) -> None:
+        """
+        Set plate key. Checks whether differs from linked model key (if any),
+        and warns if different.
+
+        :param key: List of growth categories (zero-indexed)
+        """
+        if self.model is not None:
+            if self.model.get_key() != key:
+                warn(f"Key provided to Plate does not match linked model key: {key} vs {self.model.get_key()}")
+                warn(f"Plate will be overriding key parameter: {key}")
+        self.key = key
+
     def annotate_images(self, model: Optional[Model] = None) -> list[list[str]]:
         """
         Annotate plate images
@@ -241,13 +267,13 @@ class Plate:
                 else: 
                     break
             input_code = codes[input_key]
-            if input_code == "esc" or input_code == "enter" or self.get_model_key()[input_code] == growth: 
+            if input_code == "esc" or input_code == "enter" or self.get_key()[input_code] == growth:
                 print("Classification not changed.")
                 continue
             else: 
                 # reassign growth
-                print(f"Reassigning image to {self.get_model_key()[input_code]}")
-                self.growth_matrix[i][j] = self.get_model_key()[input_code]
+                print(f"Reassigning image to {self.get_key()[input_code]}")
+                self.growth_matrix[i][j] = self.get_key()[input_code]
                 self.growth_code_matrix[i][j] = input_code
                 changed_log.append(image_index)
                 if save_dir: 
@@ -262,6 +288,23 @@ class Plate:
                     print(f"Saving image to: {save_path}")
                     cv2.imwrite(save_path, image)
         return changed_log
+
+    def convert_growth_codes(self, key: list[str]) -> list[list[str]]:
+        """
+        Convert growth codes to human-readable format using key
+        E.g., [0, 1, 2] -> ["No growth", "Poor growth", "Good growth"]
+        Sets self.growth_matrix
+
+        :param key: List of growth codes (zero-indexed)
+        :return: Growth matrix
+        """
+        self.growth_matrix = []
+        for row in self.growth_code_matrix:
+            _temp_row = []
+            for code in row:
+                _temp_row.append(key[code])
+            self.growth_matrix.append(_temp_row)
+        return self.growth_matrix
 
     def __repr__(self) -> str:
         return f"Plate of {self.drug} at {self.concentration}mg/L"
@@ -299,8 +342,8 @@ class PlateSet:
 
         :param plates_list: List of Plate objects
         """
+        self.no_growth_key_items = None
         self.qc_matrix = None
-        self.no_growth_names = None
         self.mic_matrix = None
 
         if not plates_list:
@@ -308,16 +351,17 @@ class PlateSet:
         if any([not plate.growth_matrix for plate in plates_list]): 
             raise ValueError("Please run annotate_images() on plates before initialising PlateSet")
 
-        _list_of_keys = [i.get_model_key() for i in plates_list]
+        _list_of_keys = [i.get_key() for i in plates_list]
         if not all(i == _list_of_keys[0] for i in _list_of_keys):
             raise ValueError("Plates supplied to PlateSet have different growth keys")
-        if not _list_of_keys: 
+        if not _list_of_keys:
             raise ValueError("Plates supplied to PlateSet do not have associated key")
-        
+        self.key = _list_of_keys[0]
+
         drug_names = [i.drug for i in plates_list]
-        if len(set(drug_names)) > 1: 
+        if len(set(drug_names)) > 1:
             raise ValueError("Plates supplied to PlateSet have different antibiotic names")
-        elif not len(set(drug_names)): 
+        elif not len(set(drug_names)):
             raise ValueError("Plates supplied to PlateSet do not have antibiotic names")
 
         self.drug = plates_list[0].drug
@@ -332,7 +376,6 @@ class PlateSet:
             [self.positive_control_plate] = _temp_positive_control_plate
 
         self.antibiotic_plates = sorted(self.antibiotic_plates)
-        self.key = self.antibiotic_plates[0].get_model_key()
 
         # check dimensions of plates' matrices
         if not self.valid_dimensions(): 
@@ -391,7 +434,7 @@ class PlateSet:
         :return: MIC matrix
         """
         _no_growth_names = [self.key[i] for i in no_growth_key_items]
-        self.no_growth_names = _no_growth_names
+        self.no_growth_key_items = no_growth_key_items
         self.antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
         max_concentration = max([i.concentration for i in self.antibiotic_plates])*2
         mic_matrix = np.array(self.antibiotic_plates[0].growth_matrix)
@@ -400,11 +443,11 @@ class PlateSet:
         cols = range(mic_matrix.shape[1])
 
         def get_first_negative_concentration(starting_concentration, i, j):
-            if self.antibiotic_plates[0].growth_matrix[i][j] not in self.no_growth_names:
+            if self.antibiotic_plates[0].growth_code_matrix[i][j] not in self.no_growth_key_items:
                 return starting_concentration
             c = self.antibiotic_plates[0].concentration
             for plate in self.antibiotic_plates[1:]:
-                if plate.growth_matrix[i][j] not in self.no_growth_names:
+                if plate.growth_code_matrix[i][j] not in self.no_growth_key_items:
                     return c
                 else:
                     c = plate.concentration
@@ -434,15 +477,15 @@ class PlateSet:
             print(f"*Warning* - {repr(self)} does not contain a positive control plate.")
             print("QC not valid.")
         else:
-            for i, row in enumerate(self.positive_control_plate.growth_matrix):
+            for i, row in enumerate(self.positive_control_plate.growth_code_matrix):
                 for j, item in enumerate(row):
-                    if item in self.no_growth_names:
+                    if item in self.no_growth_key_items:
                         qc_matrix[i][j] = "F"
                     else:
                         qc_matrix[i][j] = "P"
 
         def remove_ones(code): 
-            return 0 if code in self.no_growth_names else code
+            return 0 if code in self.no_growth_key_items else code
         
         antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
         if len(antibiotic_plates) > 1: 
@@ -518,7 +561,19 @@ class PlateSet:
                 f"concentrations: {[i.concentration for i in self.antibiotic_plates]}")
 
 
-def plate_set_from_dir(path: str, drug: str, model: Model, **kwargs) -> PlateSet:
+def plate_set_from_dir(path: str,
+                       drug: str,
+                       model: Model,
+                       **kwargs) -> PlateSet:
+    """
+    Create a PlateSet from a directory of images. MIC and QC values are automatically calculated.
+
+    :param path: directory containing plate images (.jpg) with filenames indicating antibiotic concentration
+    :param drug: name of drug
+    :param model: model file to use for predictions
+    :param kwargs: additional keyword arguments to pass to Plate constructor
+    :return: PlateSet with MIC and QC values
+    """
     image_paths = get_image_paths(path)
     plates = [Plate(drug, get_conc_from_path(i), i, model=model, **kwargs) for i in image_paths]
     [i.annotate_images() for i in plates]
