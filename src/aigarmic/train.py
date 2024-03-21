@@ -10,8 +10,8 @@ Documentation
 
 import keras.callbacks
 
-from file_handlers import create_dataset_from_directory
-from utils import ValidationThresholdCallback
+from aigarmic.file_handlers import create_dataset_from_directory
+from aigarmic.utils import ValidationThresholdCallback
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers
@@ -25,39 +25,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def visualise_training(history: keras.callbacks.History):
-    epochs = len(history.history['accuracy'])
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
-
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
-
-    epochs_range = range(epochs)
-
-    plt.figure(figsize=(8, 8))
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs_range, acc, label='Training Accuracy')
-    plt.plot(epochs_range, val_acc, label='Validation Accuracy')
-    plt.legend(loc='lower right')
-    plt.title('Training and Validation Accuracy')
-
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs_range, loss, label='Training Loss')
-    plt.plot(epochs_range, val_loss, label='Validation Loss')
-    plt.legend(loc='upper right')
-    plt.title('Training and Validation Loss')
-    plt.show()
-
-
 def train_binary(annotations_path,
                  model_design: Sequential,
                  val_split: float = 0.2,
-                 image_height: int = 160,
                  image_width: int = 160,
+                 image_height: int = 160,
                  batch_size: int = 64,
                  epochs: int = 300,
-                 stop_training_threshold: float = 0.98):
+                 stop_training_threshold: float = 0.98,
+                 learning_rate: float = .0001) -> tuple[Sequential, list[str], keras.callbacks.History, list]:
+    """
+    Train a binary classification model to differentiate between two classes of colony images.
+
+    :param annotations_path: Path to directory containing annotated images, with subdirectories for each class (usually
+    '0' and '1')
+    :param model_design: Keras model design (Sequential) to inform neural network architecture
+    :param val_split: Validation split proportion
+    :param image_width: Image width (pixels)
+    :param image_height: Image height (pixels)
+    :param batch_size: Training batch size
+    :param epochs: Max number of training epochs
+    :param stop_training_threshold: Accuracy threshold at which to accept model and stop training
+    :param learning_rate: Learning rate for the optimizer
+    :return: Tuple containing trained model, class names, training history, and evaluation results
+    """
     label_mode = "binary"
     train_dataset, val_dataset = create_dataset_from_directory(
         path=annotations_path,
@@ -95,7 +86,7 @@ def train_binary(annotations_path,
     model_design.add(layers.Dense(1, activation='sigmoid',
                                   bias_initializer=initial_bias))
     with tf.device('/device:GPU:0'):
-        model_design.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=.0001),
+        model_design.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate),
                              loss='binary_crossentropy',
                              metrics=['accuracy'])
 
@@ -111,14 +102,29 @@ def train_binary(annotations_path,
 
     return model_design, class_names, history, results
 
+
 def train_softmax(annotations_path,
-                 model_design: Sequential,
-                 val_split: float = 0.2,
-                 image_height: int = 160,
-                 image_width: int = 160,
-                 batch_size: int = 64,
-                 epochs: int = 300,
-                 stop_training_threshold: float = 0.98):
+                  model_design: Sequential,
+                  val_split: float = 0.2,
+                  image_height: int = 160,
+                  image_width: int = 160,
+                  batch_size: int = 64,
+                  epochs: int = 300,
+                  stop_training_threshold: float = 0.98) -> tuple[Sequential, list[str], keras.callbacks.History, list]:
+    """
+    Train a softmax classification model to differentiate between multiple classes (2 or more) of colony images.
+
+    :param annotations_path: Path to directory containing annotated images, with subdirectories for each class
+    (e.g., '0', '1', '2', ...)
+    :param model_design: Keras model design (Sequential) to inform neural network architecture
+    :param val_split: Validation split proportion
+    :param image_width: Image width (pixels)
+    :param image_height: Image height (pixels)
+    :param batch_size: Training batch size
+    :param epochs: Max number of training epochs
+    :param stop_training_threshold: Accuracy threshold at which to accept model and stop training
+    :return: Tuple containing trained model, class names, training history, and evaluation results
+    """
     label_mode = "int"
     train_dataset, val_dataset = create_dataset_from_directory(
         path=annotations_path,
@@ -138,16 +144,18 @@ def train_softmax(annotations_path,
             obs_dict[k_arr] += 1
             all_class_obs.append(k_arr)
 
-    class_weights = class_weight.compute_class_weight('balanced', classes=np.unique(all_class_obs), y=all_class_obs)
+    class_weights = class_weight.compute_class_weight('balanced',
+                                                      classes=np.unique(all_class_obs),
+                                                      y=all_class_obs)
     class_weights = dict(zip(list(range(num_classes)), class_weights))
     initial_bias = initializers.Zeros()
-    # class_weights = None
-    # initial_bias = None
 
     model_design.add(layers.Dense(num_classes, activation='softmax', bias_initializer=initial_bias))
 
     with tf.device('/device:GPU:0'):
-        model_design.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        model_design.compile(optimizer='adam',
+                             loss='sparse_categorical_crossentropy',
+                             metrics=['accuracy'])
 
         val_callback = ValidationThresholdCallback(threshold=stop_training_threshold)
         history = model_design.fit(
@@ -162,3 +170,31 @@ def train_softmax(annotations_path,
     return model_design, class_names, history, results
 
 
+def visualise_training(history: keras.callbacks.History) -> None:
+    """
+    Visualise training and validation accuracy and loss over epochs.
+
+    :param history: Training history object (usually returned by model.fit(), train_binary(), or train_softmax())
+    """
+    epochs = len(history.history['accuracy'])
+    acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    epochs_range = range(epochs)
+
+    plt.figure(figsize=(8, 8))
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs_range, acc, label='Training Accuracy')
+    plt.plot(epochs_range, val_acc, label='Validation Accuracy')
+    plt.legend(loc='lower right')
+    plt.title('Training and Validation Accuracy')
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs_range, loss, label='Training Loss')
+    plt.plot(epochs_range, val_loss, label='Validation Loss')
+    plt.legend(loc='upper right')
+    plt.title('Training and Validation Loss')
+    plt.show()
