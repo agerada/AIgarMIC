@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Filename: 	model.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-03-15
@@ -8,9 +6,10 @@
 
 """Implementation of Model classes"""
 
+from aigarmic.utils import convertCV2toKeras
+
 import tensorflow as tf
 import numpy as np
-from src.aigarmic.utils import convertCV2toKeras
 from typing import Optional
 
 

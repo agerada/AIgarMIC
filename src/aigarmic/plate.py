@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Filename: 	plate.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-01-27
@@ -8,16 +6,16 @@
 
 """Class implementation for plates"""
 
-from src.aigarmic.process_plate_image import split_by_grid
+from aigarmic.process_plate_image import split_by_grid
+from aigarmic.model import Model
+from aigarmic.utils import get_image_paths, get_conc_from_path
 from typing import Optional
 import cv2
 from random import randrange
 import numpy as np
 import os
 from string import ascii_uppercase
-from src.aigarmic.model import Model
 from warnings import warn
-from src.aigarmic.utils import get_image_paths, get_conc_from_path
 
 
 class Plate:
@@ -190,7 +188,7 @@ class Plate:
         temp_accuracy_row = []
         for row in self.image_matrix: 
             for image in row: 
-                prediction_data = self.model.predict(image)
+                prediction_data = model.predict(image)
                 temp_predictions_row.append(prediction_data['prediction'])
                 temp_score_row.append(prediction_data['score'])
                 temp_growth_code_rows.append(prediction_data['growth_code'])
@@ -410,11 +408,11 @@ class PlateSet:
         """
         Converts format of MIC matrix
 
-        :param mic_format: Format to convert to ("string" or "float")
+        :param mic_format: Format to convert to (only "string" is supported)
         :return: matrix (array) of MIC values
         """
-        allowed_formats = ("string", "float")
-        format_conversion = {"string": str, "float": float}
+        allowed_formats = ["string"]
+        format_conversion = {"string": str}
 
         if mic_format not in allowed_formats:
             raise ValueError(f"MIC matrix formats must be one of: {allowed_formats}")

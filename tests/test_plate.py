@@ -1,4 +1,4 @@
-from src.aigarmic.plate import Plate, PlateSet, plate_set_from_dir
+from aigarmic.plate import Plate, PlateSet, plate_set_from_dir
 from tests.conftest import DRUG_NAME, MIN_CONCENTRATION, MAX_CONCENTRATION, IMAGES_PATH, TARGET_MIC_CSV, basic_plates
 from os import path
 import numpy as np
@@ -18,6 +18,14 @@ def test_plates(plates_list):
     temp_image, code = plates_list[0].get_colony_image()
     assert isinstance(temp_image, np.ndarray)
     assert isinstance(code, str)
+
+
+@pytest.mark.skip
+def test_annotate_images(plates_list, binary_nested_model):
+    [single_plate] = [i for i in plates_list if i.concentration == MIN_CONCENTRATION]
+    single_plate.annotate_images(model=binary_nested_model)
+    assert single_plate.growth_code_matrix[1][0] == 2
+    assert single_plate.growth_code_matrix[0][1] == 2
 
 
 @pytest.mark.skip
@@ -162,3 +170,22 @@ def test_valid_dimensions():
 
     with pytest.raises(ValueError):
         PlateSet(test_dimension_plates)
+
+
+def test_get_colony_image(plates_list):
+    indices = [(5, 5), (7, 10), (1, 1), (2, 6), (3, 1)]
+    [single_plate] = [i for i in plates_list if i.concentration == MAX_CONCENTRATION]
+    for i in indices:
+        temp_image, code = single_plate.get_colony_image(i)
+        assert isinstance(temp_image, np.ndarray)
+        assert isinstance(code, str)
+        assert code == "_".join([DRUG_NAME,
+                                 str(single_plate.concentration),
+                                 "i", str(i[0]),
+                                 "j", str(i[1])])
+
+    with pytest.raises(IndexError):
+        single_plate.get_colony_image((12, 14))
+
+
+

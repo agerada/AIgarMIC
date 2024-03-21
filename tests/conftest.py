@@ -1,7 +1,7 @@
 import pytest
-from src.aigarmic.model import BinaryModel, BinaryNestedModel
-from src.aigarmic.plate import Plate
-from src.aigarmic.utils import get_image_paths, get_conc_from_path
+from aigarmic.model import BinaryModel, BinaryNestedModel
+from aigarmic.plate import Plate
+from aigarmic.utils import get_image_paths, get_conc_from_path
 import cv2
 from os import path
 

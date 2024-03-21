@@ -8,12 +8,13 @@
 
 """This script trains an image annotation model"""
 
-import pickle, os, cv2 
+from aigarmic import convertCV2toKeras
+
+import pickle, os, cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import pathlib
-from src.aigarmic import convertCV2toKeras
 
 import tensorflow as tf
 from tensorflow import keras

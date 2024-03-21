@@ -1,5 +1,5 @@
 from tests.conftest import MIC_PLATES_PATH, IMAGES_PATH
-from src.aigarmic.utils import get_image_paths
+from aigarmic.utils import get_image_paths
 
 
 def test_get_image_paths():

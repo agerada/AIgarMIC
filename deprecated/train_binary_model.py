@@ -20,7 +20,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
-from src.aigarmic import create_dataset_from_directory, predict_images_from_directory
+from aigarmic.file_handlers import create_dataset_from_directory, predict_colony_images_from_directory
 
 IMAGE_WIDTH = 160
 IMAGE_HEIGHT = 160

@@ -1,4 +1,4 @@
-from src.aigarmic.process_plate_image import find_threshold_value, split_by_grid
+from aigarmic.process_plate_image import find_threshold_value, split_by_grid
 from tests.conftest import plates_images_paths
 import cv2
 
@@ -23,4 +23,3 @@ def test_split_by_grid(plates_images_paths):
         split_images = split_by_grid(image, visualise_contours=False)
         assert len(split_images) == 8
         assert len(split_images[0]) == 12
-

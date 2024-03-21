@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "AIgarMIC"
+version = "0.0.1"
+authors = [
+  { name="Alessandro Gerada", email="alessandro.gerada@liverpool.ac.uk" },
+]
+description = "Machine-learning assisted agar dilution MIC"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
