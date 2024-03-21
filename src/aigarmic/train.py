@@ -5,10 +5,8 @@
 # Email:         alessandro.gerada@liverpool.ac.uk
 
 """
-Documentation
+Functions and classes that allow for training neural network models for colony image classification.
 """
-
-import keras.callbacks
 
 from aigarmic.file_handlers import create_dataset_from_directory
 from aigarmic.utils import ValidationThresholdCallback
@@ -17,6 +15,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.utils import image_dataset_from_directory
 from tensorflow.keras.initializers import Constant
+import keras.callbacks
 from sklearn.utils import class_weight
 from tensorflow.keras import initializers
 

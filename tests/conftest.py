@@ -16,6 +16,8 @@ MIN_CONCENTRATION = 0.0
 MAX_CONCENTRATION = 64.0
 TARGET_MIC_CSV = "../images/amikacin/amikacin_target_spectrum_model.csv"
 MIC_PLATES_PATH = path.join(IMAGES_PATH, DRUG_NAME)
+TRAIN_ANNOTATIONS_PATH = "../images/annotations/train_binary/"
+TEST_ANNOTATIONS_PATH = "../images/annotations/test_binary/"
 
 
 @pytest.fixture
