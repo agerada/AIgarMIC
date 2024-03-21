@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Filename: 	file_handlers.py
 # Author: 	Alessandro Gerada
@@ -7,73 +6,103 @@
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
 """Functions to facilitate working with image data files"""
+from aigarmic.utils import convertCV2toKeras
 import csv
 import os
 from os import path
 from typing import Optional
-
 import cv2
 import keras.callbacks
 import numpy as np
 import tensorflow as tf
 
-from aigarmic.utils import convertCV2toKeras
 
+def create_dataset_from_directory(directory: str,
+                                  label_mode: str,
+                                  image_width: int,
+                                  image_height: int,
+                                  seed: int = 12345,
+                                  val_split: float = 0.2,
+                                  batch_size: int = 32) -> tuple[tf.data.Dataset, tf.data.Dataset]:
+    """
+    Create a training and validation dataset from a directory containing subdirectories for each class of image data.
 
-def create_dataset_from_directory(path, label_mode, image_width, image_height, val_split = 0.2,
-                                  filter_predicate = lambda img,x: True,
-                                  batch_size=32):
+    :param directory: path containing images, each in subdirectory corresponding to class
+    :param label_mode: Labelling depending on model type ("binary" for binary or "int" for softmax)
+    :param image_width: Image width in pixels
+    :param image_height: Image height in pixels
+    :param seed: Random seed for dataset splitting
+    :param val_split: Proportion of data to use for validation
+    :param batch_size: Batch size for datasets
+    :return: Tuple containing training and validation datasets
+    """
     train_dataset = tf.keras.utils.image_dataset_from_directory(
-                path, 
+                directory,
                 validation_split=val_split, 
                 subset='training',
-                seed=12345, 
+                seed=seed,
                 image_size=(image_width, image_height), 
                 batch_size=batch_size, 
                 label_mode=label_mode
             )
     val_dataset = tf.keras.utils.image_dataset_from_directory(
-        path, 
+        directory,
         validation_split=val_split, 
         subset='validation', 
-        seed=12345, 
+        seed=seed,
         image_size=(image_width, image_height), 
         batch_size=batch_size, 
         label_mode=label_mode
     )
     print(f"Found the following labels/classes: {train_dataset.class_names}")
-    return train_dataset,val_dataset
+    return train_dataset, val_dataset
 
 
-def predict_colony_images_from_directory(path,
-                                         model,
-                                         class_names,
-                                         image_width,
-                                         image_height,
-                                         model_type,
+def predict_colony_images_from_directory(directory: str,
+                                         model: tf.keras.models.Model,
+                                         class_names: list[str],
+                                         image_width: int,
+                                         image_height: int,
+                                         model_type: str,
                                          save_path: Optional[str] = None,
-                                         binary_threshold = 0.5):
+                                         binary_threshold: float = 0.5) -> list[dict]:
+    """
+    Predict the class of images in a directory using a trained model, and compare prediction to
+    true class (based on subdirectory in which image is located, which should correspond to class name).
+
+    :param directory: Directory containing images to predict
+    :param model: Model to use for prediction
+    :param class_names: List of class names
+    :param image_width: Image width in pixels
+    :param image_height: Image height in pixels
+    :param model_type: "binary" or "softmax"
+    :param save_path: Path to save prediction log (as test_dataset_log.csv)
+    :param binary_threshold: For binary models, threshold for classifying as positive
+    :return: List of dictionaries containing image, path, prediction, predicted class, and true class (for each image)
+    """
     output = []
-    file_paths = {i: os.listdir(os.path.join(path, i)) for i in class_names}
+    file_paths = {i: os.listdir(os.path.join(directory, i)) for i in class_names}
     # add subdirectories
-    file_paths = {i: [os.path.join(path,i,j) for j in file_paths[i] if j.count(".jpg") > 0] for i in file_paths}
+    file_paths = {i: [os.path.join(directory, i, j) for j in file_paths[i] if j.count(".jpg") > 0] for i in file_paths}
 
     for i in file_paths:
         for j in file_paths[i]:
             image = cv2.imread(j)
             true_class = i
-            path = j
+            directory = j
             prediction = model.predict(convertCV2toKeras(image, image_width, image_height))
-            if model_type=="binary":
+            if model_type == "binary":
                 [prediction] = prediction.reshape(-1)
                 predicted_class = class_names[0] if prediction <= binary_threshold else class_names[1]
-            elif model_type=="softmax":
+            elif model_type == "softmax":
                 prediction = tf.nn.softmax(prediction)
                 prediction_value = np.max(prediction)
                 predicted_class = np.argmax(prediction)
                 prediction = prediction_value
+            else:
+                raise ValueError("Model type not supported")
             output.append({"image": image,
-                           "path": path,
+                           "path": directory,
                            "prediction": prediction,
                            "predicted_class": predicted_class,
                            "true_class": true_class})
@@ -91,7 +120,14 @@ def predict_colony_images_from_directory(path,
     return output
 
 
-def save_training_log(model_history: keras.callbacks.History, save_path):
+def save_training_log(model_history: keras.callbacks.History,
+                      save_path: str) -> None:
+    """
+    Save training log to CSV file
+
+    :param model_history: Training history object
+    :param save_path: Directory to save training log
+    """
     training_log_file = path.join(save_path, "training_log.csv")
     with open(training_log_file, "w") as file:
         writer = csv.writer(file)

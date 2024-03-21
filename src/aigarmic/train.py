@@ -50,7 +50,7 @@ def train_binary(annotations_path,
     """
     label_mode = "binary"
     train_dataset, val_dataset = create_dataset_from_directory(
-        path=annotations_path,
+        directory=annotations_path,
         label_mode=label_mode,
         image_width=image_width,
         image_height=image_height,
@@ -126,7 +126,7 @@ def train_softmax(annotations_path,
     """
     label_mode = "int"
     train_dataset, val_dataset = create_dataset_from_directory(
-        path=annotations_path,
+        directory=annotations_path,
         label_mode=label_mode,
         image_width=image_width,
         image_height=image_height,
