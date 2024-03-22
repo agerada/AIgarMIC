@@ -2,6 +2,8 @@ import pytest
 from aigarmic.model import BinaryModel, BinaryNestedModel
 from aigarmic.plate import Plate
 from aigarmic.utils import get_image_paths, get_conc_from_path
+from aigarmic.train import train_binary
+from aigarmic.nn_design import model_design_spectrum_2024_binary_first_step
 import cv2
 from os import path
 
@@ -18,25 +20,27 @@ TARGET_MIC_CSV = "../images/amikacin/amikacin_target_spectrum_model.csv"
 MIC_PLATES_PATH = path.join(IMAGES_PATH, DRUG_NAME)
 TRAIN_ANNOTATIONS_PATH = "../images/annotations/train_binary/"
 TEST_ANNOTATIONS_PATH = "../images/annotations/test_binary/"
+IMAGE_WIDTH = 160
+IMAGE_HEIGHT = 160
 
 
 @pytest.fixture
-def first_line_model():
+def first_line_model_from_file():
     return BinaryModel(FIRST_LINE_MODEL_PATH,
-                       trained_x=160, trained_y=160,
+                       trained_x=IMAGE_WIDTH, trained_y=IMAGE_HEIGHT,
                        threshold=0.5, key=["No growth", "Growth"])
 
 
 @pytest.fixture
-def second_line_model():
+def second_line_model_from_file():
     return BinaryModel(SECOND_LINE_MODEL_PATH,
-                       trained_x=160, trained_y=160,
+                       trained_x=IMAGE_WIDTH, trained_y=IMAGE_HEIGHT,
                        threshold=0.5, key=["Poor growth", "Good growth"])
 
 
 @pytest.fixture
-def binary_nested_model(first_line_model, second_line_model):
-    return BinaryNestedModel(first_line_model, second_line_model,
+def binary_nested_model_from_file(first_line_model_from_file, second_line_model_from_file):
+    return BinaryNestedModel(first_line_model_from_file, second_line_model_from_file,
                              first_model_accuracy_acceptance=0.9,
                              suppress_first_model_accuracy_check=True)
 
@@ -97,3 +101,16 @@ def basic_plates():
         [2, 0]]
 
     return output
+
+
+@pytest.fixture
+def binary_model_trained():
+    return train_binary(annotations_path=TRAIN_ANNOTATIONS_PATH,
+                        model_design=model_design_spectrum_2024_binary_first_step(IMAGE_WIDTH, IMAGE_HEIGHT),
+                        val_split=0.2,
+                        image_width=IMAGE_WIDTH,
+                        image_height=IMAGE_HEIGHT,
+                        batch_size=2,
+                        epochs=10)
+
+

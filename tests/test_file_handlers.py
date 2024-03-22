@@ -1,5 +1,6 @@
 from tests.conftest import TRAIN_ANNOTATIONS_PATH, TEST_ANNOTATIONS_PATH
-from aigarmic.file_handlers import create_dataset_from_directory, predict_colony_images_from_directory
+from aigarmic.file_handlers import create_dataset_from_directory, predict_colony_images_from_directory, \
+    save_training_log
 from aigarmic.utils import get_image_paths
 import tensorflow as tf
 import pytest
@@ -32,16 +33,16 @@ def test_create_dataset_from_directory():
     assert total_val / (total_train + total_val) == pytest.approx(0.2, 0.05)
 
 
-def test_predict_colony_images_from_directory(binary_nested_model, tmp_path):
+def test_predict_colony_images_from_directory(binary_nested_model_from_file, tmp_path):
     d = tmp_path / "predictions"
     d.mkdir()
     predictions = predict_colony_images_from_directory(TEST_ANNOTATIONS_PATH,
-                                         model=binary_nested_model.first_line_model.keras_data,
-                                            class_names=["0", "1"],
-                                            image_width=160,
-                                            image_height=160,
-                                                       save_path=d,
-                                            model_type="binary")
+                                                       model=binary_nested_model_from_file.first_line_model.keras_data,
+                                                       class_names=["0", "1"],
+                                                       image_width=160,
+                                                       image_height=160,
+                                                       save_path=d / "test_dataset_log.csv",
+                                                       model_type="binary")
 
     for i in predictions:
         assert i['predicted_class'] == i['true_class']
@@ -52,3 +53,20 @@ def test_predict_colony_images_from_directory(binary_nested_model, tmp_path):
         for row in reader:
             assert row['predicted_class'] == row['true_class']
 
+
+def test_save_training_log(binary_model_trained, tmp_path):
+    model, classes, history, results = binary_model_trained
+    d = tmp_path / "training_log"
+    d.mkdir()
+    save_training_log(history, d / "test_dataset_log.csv")
+
+    with open(d / "test_dataset_log.csv", "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            assert float(row['loss']) >= 0
+            assert float(row['accuracy']) >= 0
+            assert float(row['val_loss']) >= 0
+            assert float(row['val_accuracy']) >= 0
+            assert float(row['accuracy']) <= 1
+            assert float(row['val_accuracy']) <= 1
+            assert int(row['epoch']) >= 0

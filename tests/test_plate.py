@@ -21,18 +21,18 @@ def test_plates(plates_list):
 
 
 @pytest.mark.skip
-def test_annotate_images(plates_list, binary_nested_model):
+def test_annotate_images(plates_list, binary_nested_model_from_file):
     [single_plate] = [i for i in plates_list if i.concentration == MIN_CONCENTRATION]
-    single_plate.annotate_images(model=binary_nested_model)
+    single_plate.annotate_images(model=binary_nested_model_from_file)
     assert single_plate.growth_code_matrix[1][0] == 2
     assert single_plate.growth_code_matrix[0][1] == 2
 
 
 @pytest.mark.skip
-def test_plate_set(binary_nested_model):
+def test_plate_set(binary_nested_model_from_file):
     plate_set = plate_set_from_dir(path=path.join(IMAGES_PATH, DRUG_NAME),
                                    drug=DRUG_NAME,
-                                   model=binary_nested_model)
+                                   model=binary_nested_model_from_file)
     assert isinstance(plate_set, PlateSet)
 
     with open(TARGET_MIC_CSV, "r", encoding='utf-8-sig') as f:

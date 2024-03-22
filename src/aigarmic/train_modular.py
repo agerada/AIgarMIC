@@ -81,12 +81,16 @@ def main():
             warnings.warn("Unable to save log file because model save path not provided, please use -s to provide path.")
         else:
 
-            annotation_log_file = os.path.join(args.save, "test_dataset_log.csv")
-            save_training_log(history, annotation_log_file)
+            training_log_file = os.path.join(args.save, "training_log.csv")
+            save_training_log(history, training_log_file)
 
     if args.test_dataset:
+        if args.save is not None:
+            annotation_log_file = os.path.join(args.save, "test_dataset_log.csv")
+        else:
+            annotation_log_file = None
         annotation_log = predict_colony_images_from_directory(args.test_dataset, model, classes, IMAGE_WIDTH, IMAGE_HEIGHT, args.model_type,
-                                                              save_path=args.save)
+                                                              save_path=annotation_log_file)
         if args.visualise:
             for i in annotation_log:
                 if i["predicted_class"] != i["true_class"]:

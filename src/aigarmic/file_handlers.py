@@ -6,11 +6,13 @@
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
 """Functions to facilitate working with image data files"""
+import pathlib
+
 from aigarmic.utils import convertCV2toKeras
 import csv
 import os
 from os import path
-from typing import Optional
+from typing import Optional, Union
 import cv2
 import keras.callbacks
 import numpy as np
@@ -58,13 +60,13 @@ def create_dataset_from_directory(directory: str,
     return train_dataset, val_dataset
 
 
-def predict_colony_images_from_directory(directory: str,
+def predict_colony_images_from_directory(directory: Optional[Union[str, pathlib.Path]],
                                          model: tf.keras.models.Model,
                                          class_names: list[str],
                                          image_width: int,
                                          image_height: int,
                                          model_type: str,
-                                         save_path: Optional[str] = None,
+                                         save_path: Optional[Union[str, pathlib.Path]] = None,
                                          binary_threshold: float = 0.5) -> list[dict]:
     """
     Predict the class of images in a directory using a trained model, and compare prediction to
@@ -76,7 +78,7 @@ def predict_colony_images_from_directory(directory: str,
     :param image_width: Image width in pixels
     :param image_height: Image height in pixels
     :param model_type: "binary" or "softmax"
-    :param save_path: Path to save prediction log (as test_dataset_log.csv)
+    :param save_path: Path to save prediction log
     :param binary_threshold: For binary models, threshold for classifying as positive
     :return: List of dictionaries containing image, path, prediction, predicted class, and true class (for each image)
     """
@@ -107,29 +109,24 @@ def predict_colony_images_from_directory(directory: str,
                            "predicted_class": predicted_class,
                            "true_class": true_class})
     if save_path:
-        if not os.path.exists(save_path):
-            print(f"Target save directory does not exist: {save_path}")
-            print("Skipping saving")
-        else:
-            annotation_log_file = path.join(save_path, "test_dataset_log.csv")
-            with open(annotation_log_file, "w") as file:
-                writer = csv.DictWriter(file, ['path', 'prediction', 'predicted_class', 'true_class'],
-                                        extrasaction='ignore')
-                writer.writeheader()
-                writer.writerows(output)
+        with open(save_path, "w") as file:
+            writer = csv.DictWriter(file,
+                                    fieldnames=['path', 'prediction', 'predicted_class', 'true_class'],
+                                    extrasaction='ignore')
+            writer.writeheader()
+            writer.writerows(output)
     return output
 
 
 def save_training_log(model_history: keras.callbacks.History,
-                      save_path: str) -> None:
+                      save_path: Union[str, pathlib.Path]) -> None:
     """
     Save training log to CSV file
 
     :param model_history: Training history object
     :param save_path: Directory to save training log
     """
-    training_log_file = path.join(save_path, "training_log.csv")
-    with open(training_log_file, "w") as file:
+    with open(save_path, "w") as file:
         writer = csv.writer(file)
         h = zip(
             model_history.history['accuracy'],
