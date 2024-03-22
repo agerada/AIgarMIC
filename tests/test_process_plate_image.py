@@ -1,8 +1,10 @@
 from aigarmic.process_plate_image import find_threshold_value, split_by_grid
 from tests.conftest import plates_images_paths
 import cv2
+import pytest
 
 
+@pytest.mark.assets_required
 def test_find_threshold_value(plates_images_paths, growth_image):
     for i in plates_images_paths:
         image = cv2.imread(i)
@@ -17,6 +19,7 @@ def test_find_threshold_value(plates_images_paths, growth_image):
     assert find_threshold_value(gray) is None
 
 
+@pytest.mark.assets_required
 def test_split_by_grid(plates_images_paths):
     for i in plates_images_paths:
         image = cv2.imread(i)

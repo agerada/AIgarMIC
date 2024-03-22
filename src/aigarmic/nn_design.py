@@ -1,12 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Filename: 	nn_design.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-08-11
 # Copyright: 	Alessandro Gerada 2023
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
-"""Sequential NN designs"""
+"""Template NN designs as reported in Gerada et al. 2024 Microbiology Spectrum paper"""
+
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 
@@ -15,7 +14,7 @@ def model_design_spectrum_2024_binary_first_step(image_width: int,
                                                  image_height: int,
                                                  augmentation: bool = True):
     design = [
-        #  spectrum 2014 first-step model
+        #  spectrum 2024 first-step model
         layers.Rescaling(1./255, input_shape=(image_width, image_height, 3)),
         layers.Conv2D(32, (3,3), activation='relu'),
         layers.MaxPooling2D((2,2)),
@@ -50,7 +49,7 @@ def model_design_spectrum_2024_binary_second_step(image_width: int,
                                                   image_height: int,
                                                   augmentation: bool = True):
     design = [
-        #  spectrum 2014 second-step model
+        #  spectrum 2024 second-step model
         layers.Rescaling(1. / 255, input_shape=(image_width, image_height, 3)),
         layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
         layers.MaxPooling2D((2, 2)),

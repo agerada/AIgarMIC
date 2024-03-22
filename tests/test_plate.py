@@ -1,12 +1,13 @@
 from aigarmic.plate import Plate, PlateSet, plate_set_from_dir
-from tests.conftest import DRUG_NAME, MIN_CONCENTRATION, MAX_CONCENTRATION, IMAGES_PATH, TARGET_MIC_CSV, basic_plates
+from tests.conftest import (DRUG_NAME, MIN_CONCENTRATION, MAX_CONCENTRATION, TARGET_MIC_CSV, MIC_PLATES_PATH,
+                            basic_plates)
 from os import path
 import numpy as np
 import csv
 import pytest
 
 
-@pytest.mark.skip
+@pytest.mark.assets_required
 def test_plates(plates_list):
     assert [isinstance(i, Plate) for i in plates_list]
     assert [i.drug == DRUG_NAME for i in plates_list]
@@ -20,7 +21,7 @@ def test_plates(plates_list):
     assert isinstance(code, str)
 
 
-@pytest.mark.skip
+@pytest.mark.assets_required
 def test_annotate_images(plates_list, binary_nested_model_from_file):
     [single_plate] = [i for i in plates_list if i.concentration == MIN_CONCENTRATION]
     single_plate.annotate_images(model=binary_nested_model_from_file)
@@ -28,9 +29,9 @@ def test_annotate_images(plates_list, binary_nested_model_from_file):
     assert single_plate.growth_code_matrix[0][1] == 2
 
 
-@pytest.mark.skip
+@pytest.mark.assets_required
 def test_plate_set(binary_nested_model_from_file):
-    plate_set = plate_set_from_dir(path=path.join(IMAGES_PATH, DRUG_NAME),
+    plate_set = plate_set_from_dir(path=path.join(MIC_PLATES_PATH, DRUG_NAME),
                                    drug=DRUG_NAME,
                                    model=binary_nested_model_from_file)
     assert isinstance(plate_set, PlateSet)
@@ -52,7 +53,6 @@ def test_plate_set(binary_nested_model_from_file):
         assert target == prediction
 
 
-@pytest.mark.skip
 def test_convert_growth_codes(basic_plates):
     for i in basic_plates:
         i.convert_growth_codes(key=["No growth", "Poor Growth", "Growth"])
@@ -82,7 +82,6 @@ def test_convert_growth_codes(basic_plates):
     assert [i.growth_matrix == j for i, j in zip(basic_plates, target_growths)]
 
 
-@pytest.mark.skip
 def test_calculate_mic(basic_plates):
     _key = ["No growth", "Poor Growth", "Growth"]
     for i in basic_plates:
@@ -105,7 +104,6 @@ def test_calculate_mic(basic_plates):
     assert basic_plate_set.get_csv_data() == target_output
 
 
-@pytest.mark.skip
 def test_generate_qc():
     test_qc_plates = [
         Plate('genta', 64.),
@@ -175,6 +173,7 @@ def test_valid_dimensions():
         PlateSet(test_dimension_plates)
 
 
+@pytest.mark.assets_required
 def test_get_colony_image(plates_list):
     indices = [(5, 5), (7, 10), (1, 1), (2, 6), (3, 1)]
     [single_plate] = [i for i in plates_list if i.concentration == MAX_CONCENTRATION]

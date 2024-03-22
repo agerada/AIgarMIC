@@ -1,12 +1,13 @@
 from tests.conftest import TRAIN_ANNOTATIONS_PATH, TEST_ANNOTATIONS_PATH
 from aigarmic.file_handlers import create_dataset_from_directory, predict_colony_images_from_directory, \
     save_training_log
-from aigarmic.utils import get_image_paths
+from aigarmic.img_utils import get_image_paths
 import tensorflow as tf
 import pytest
 import csv
 
 
+@pytest.mark.assets_required
 def test_create_dataset_from_directory():
     no_growth_images = get_image_paths(TRAIN_ANNOTATIONS_PATH + "0/")
     growth_images = get_image_paths(TRAIN_ANNOTATIONS_PATH + "1/")
@@ -33,6 +34,7 @@ def test_create_dataset_from_directory():
     assert total_val / (total_train + total_val) == pytest.approx(0.2, 0.05)
 
 
+@pytest.mark.assets_required
 def test_predict_colony_images_from_directory(binary_nested_model_from_file, tmp_path):
     d = tmp_path / "predictions"
     d.mkdir()
@@ -54,6 +56,7 @@ def test_predict_colony_images_from_directory(binary_nested_model_from_file, tmp
             assert row['predicted_class'] == row['true_class']
 
 
+@pytest.mark.assets_required
 def test_save_training_log(binary_model_trained, tmp_path):
     model, classes, history, results = binary_model_trained
     d = tmp_path / "training_log"

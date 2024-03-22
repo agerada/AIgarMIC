@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Filename: 	train_modular.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-08-11

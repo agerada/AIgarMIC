@@ -8,7 +8,7 @@
 
 from aigarmic.process_plate_image import split_by_grid
 from aigarmic.model import Model
-from aigarmic.utils import get_image_paths, get_conc_from_path
+from aigarmic.img_utils import get_image_paths, get_concentration_from_path
 from typing import Optional
 import cv2
 from random import randrange
@@ -607,7 +607,7 @@ def plate_set_from_dir(path: str,
     :return: PlateSet with MIC and QC values
     """
     image_paths = get_image_paths(path)
-    plates = [Plate(drug, get_conc_from_path(i), i, model=model, **kwargs) for i in image_paths]
+    plates = [Plate(drug, get_concentration_from_path(i), i, model=model, **kwargs) for i in image_paths]
     [i.annotate_images() for i in plates]
     output = PlateSet(plates)
     return output

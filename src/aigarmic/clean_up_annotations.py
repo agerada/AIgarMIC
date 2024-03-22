@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Filename: 	clean_up_annotations.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-03-17
@@ -10,12 +9,13 @@
 
 import argparse
 import cv2
-from utils import get_image_paths
+from img_utils import get_image_paths
 import numpy as np
 from os import remove
 
+
 class Deleter: 
-    def __init__(self, confirm = True): 
+    def __init__(self, confirm=True):
         self.confirm = confirm
         self.converter = {
             "y": "yes", 
@@ -27,6 +27,7 @@ class Deleter:
             "al": "all", 
             "all": "all"
         }
+
     def delete_file(self, file): 
         if not self.confirm: 
             print(f"Deleting duplicate file: {file}")
@@ -58,31 +59,35 @@ def is_similar(image1, image2):
     """
     From: https://stackoverflow.com/a/23199159
     """
-    return image1.shape == image2.shape and not(np.bitwise_xor(image1,image2).any())
+    return image1.shape == image2.shape and not (np.bitwise_xor(image1, image2).any())
 
-def in_list(image, list): 
-    if not list: 
+
+def in_list(image, target_list):
+    if not target_list:
         return False
     else: 
-        for i in list: 
+        for i in target_list:
             if is_similar(i, image): 
                 return True
         return False
+
 
 def main(): 
     parser = argparse.ArgumentParser("""
     Clean up duplicate images in annotation folders
     """)
-    parser.add_argument('input_dir', type=str, help='Input directory - can contain subdirectory of images which will be processed separately')
-    parser.add_argument('-q', '--quiet', action='store_true', help="Suppress file deletion warnings (CAUTION)")
+    parser.add_argument('input_dir', type=str,
+                        help="Input directory - can contain subdirectory of images which will be processed separately")
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help="Suppress file deletion warnings (CAUTION)")
     args = parser.parse_args()
 
     images_paths = get_image_paths(args.input_dir)
     
-    deleter = Deleter(confirm= False if args.quiet else True)
+    deleter = Deleter(confirm=False if args.quiet else True)
 
     _images_list = []
-    if type(images_paths) == list: 
+    if isinstance(images_paths, list):
         for i in images_paths: 
             _image = cv2.imread(i)
             if not in_list(_image, _images_list): 
@@ -90,7 +95,7 @@ def main():
             else: 
                 deleter.delete_file(i)
 
-    if type(images_paths) == dict: 
+    if isinstance(images_paths, dict):
         for k,v in images_paths.items(): 
             _images_list = []
             for i in v: 
@@ -100,4 +105,5 @@ def main():
                 else: 
                     deleter.delete_file(i)
 
-main()
+if __name__ == "__main__":
+    main()

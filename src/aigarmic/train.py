@@ -9,7 +9,6 @@ Functions and classes that allow for training neural network models for colony i
 """
 
 from aigarmic.file_handlers import create_dataset_from_directory
-from aigarmic.utils import ValidationThresholdCallback
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers
@@ -197,3 +196,19 @@ def visualise_training(history: keras.callbacks.History) -> None:
     plt.legend(loc='upper right')
     plt.title('Training and Validation Loss')
     plt.show()
+
+
+class ValidationThresholdCallback(tf.keras.callbacks.Callback):
+    def __init__(self, threshold):
+        """
+        Stop training if validation accuracy is above threshold
+
+        :param threshold: Threshold to stop training
+        """
+        super().__init__()
+        self.threshold = threshold
+
+    def on_epoch_end(self, epoch, logs=None):
+        val_acc = logs["val_accuracy"]
+        if val_acc >= self.threshold:
+            self.model.stop_training = True

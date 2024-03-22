@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Filename: 	file_handlers.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-08-11
@@ -8,7 +7,7 @@
 """Functions to facilitate working with image data files"""
 
 import pathlib
-from aigarmic.utils import convertCV2toKeras
+from aigarmic.img_utils import convert_cv2_to_keras
 import csv
 import os
 from typing import Optional, Union
@@ -91,7 +90,7 @@ def predict_colony_images_from_directory(directory: Optional[Union[str, pathlib.
             image = cv2.imread(j)
             true_class = i
             directory = j
-            prediction = model.predict(convertCV2toKeras(image, image_width, image_height))
+            prediction = model.predict(convert_cv2_to_keras(image, image_width, image_height))
             if model_type == "binary":
                 [prediction] = prediction.reshape(-1)
                 predicted_class = class_names[0] if prediction <= binary_threshold else class_names[1]

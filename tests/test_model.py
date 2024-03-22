@@ -1,6 +1,8 @@
 from tests.conftest import FIRST_LINE_MODEL_PATH
+import pytest
 
 
+@pytest.mark.assets_required
 class TestBinaryModel:
     def test_predict(self, first_line_model_from_file, growth_image, no_growth_image):
         output_prediction = first_line_model_from_file.predict(growth_image)
@@ -18,6 +20,7 @@ class TestBinaryModel:
         assert first_line_model_from_file.get_key() == ["No growth", "Growth"]
 
 
+@pytest.mark.assets_required
 class TestBinaryNestedModel:
     def test_predict(self, binary_nested_model_from_file,
                      growth_image,

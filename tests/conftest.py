@@ -1,7 +1,7 @@
 import pytest
 from aigarmic.model import BinaryModel, BinaryNestedModel
 from aigarmic.plate import Plate
-from aigarmic.utils import get_image_paths, get_conc_from_path
+from aigarmic.img_utils import get_image_paths, get_concentration_from_path
 from aigarmic.train import train_binary
 from aigarmic.nn_design import model_design_spectrum_2024_binary_first_step
 import cv2
@@ -16,8 +16,8 @@ IMAGES_PATH = "../images/"
 DRUG_NAME = "amikacin"
 MIN_CONCENTRATION = 0.0
 MAX_CONCENTRATION = 64.0
-TARGET_MIC_CSV = "../images/amikacin/amikacin_target_spectrum_model.csv"
 MIC_PLATES_PATH = path.join(IMAGES_PATH, "antimicrobials")
+TARGET_MIC_CSV = path.join(MIC_PLATES_PATH, DRUG_NAME, "amikacin_target_spectrum_model.csv")
 TRAIN_ANNOTATIONS_PATH = "../images/annotations/train_binary/"
 TEST_ANNOTATIONS_PATH = "../images/annotations/test_binary/"
 IMAGE_WIDTH = 160
@@ -67,7 +67,7 @@ def plates_images_paths():
 
 @pytest.fixture
 def plates_list(plates_images_paths):
-    return [Plate(DRUG_NAME, get_conc_from_path(i), i, visualise_contours=False) for i in plates_images_paths]
+    return [Plate(DRUG_NAME, get_concentration_from_path(i), i, visualise_contours=False) for i in plates_images_paths]
 
 
 @pytest.fixture

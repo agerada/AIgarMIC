@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Filename: 	process_plate_image.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-01-27

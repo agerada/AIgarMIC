@@ -6,7 +6,7 @@
 
 """Implementation of Model classes"""
 
-from aigarmic.utils import convertCV2toKeras
+from aigarmic.img_utils import convert_cv2_to_keras
 
 import tensorflow as tf
 import numpy as np
@@ -82,7 +82,7 @@ class SoftmaxModel(Model):
         :return: dictionary with keys 'prediction', 'score', 'growth_code', 'growth', 'accuracy'
         """
         key = self.get_key()
-        image = convertCV2toKeras(image, size_x=self.trained_x, size_y=self.trained_y)
+        image = convert_cv2_to_keras(image, size_x=self.trained_x, size_y=self.trained_y)
         output = {'prediction': self.keras_data.predict(image)}
         output['score'] = tf.nn.softmax(output['prediction'])
         output['growth_code'] = np.argmax(output['score'])
@@ -122,7 +122,7 @@ class BinaryModel(Model):
         :return: dictionary with keys 'prediction', 'score', 'growth_code', 'growth', 'accuracy'
         """
         key = self.get_key()
-        image = convertCV2toKeras(image, size_x=self.trained_x, size_y=self.trained_y)
+        image = convert_cv2_to_keras(image, size_x=self.trained_x, size_y=self.trained_y)
         prediction = self.keras_data.predict(image)
         [prediction] = prediction.reshape(-1)
         output = {'prediction': prediction}

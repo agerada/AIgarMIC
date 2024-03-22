@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Filename: 	main.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-01-27
@@ -12,7 +11,7 @@ import pathlib
 from process_plate_image import split_by_grid
 from plate import Plate, PlateSet, plate_set_from_dir
 import argparse
-from utils import get_conc_from_path, get_paths_from_directory
+from img_utils import get_concentration_from_path, get_paths_from_directory
 import csv
 from model import SoftmaxModel, BinaryModel, BinaryNestedModel
 import sys
@@ -56,7 +55,7 @@ def main():
             for path in paths:
                 _image = cv2.imread(path)
                 try:
-                    split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_conc_from_path(path)))
+                    split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_concentration_from_path(path)))
                 except ValueError as err:
                     print(err)
 

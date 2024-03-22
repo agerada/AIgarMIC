@@ -1,8 +1,10 @@
 import subprocess
 from tests.conftest import FIRST_LINE_MODEL_PATH, MIC_PLATES_PATH, DRUG_NAME
 import csv
+import pytest
 
 
+@pytest.mark.assets_required
 def test_main(tmp_path):
     d = tmp_path / "predictions"
     d.mkdir()
