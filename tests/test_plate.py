@@ -35,6 +35,9 @@ def test_plate_set(binary_nested_model_from_file):
                                    model=binary_nested_model_from_file)
     assert isinstance(plate_set, PlateSet)
 
+    plate_set.calculate_mic()
+    plate_set.generate_qc()
+
     with open(TARGET_MIC_CSV, "r", encoding='utf-8-sig') as f:
         target_mic_values = []
         reader = csv.DictReader(f)

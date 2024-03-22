@@ -235,21 +235,29 @@ class Plate:
     def review_poor_images(self, threshold: float = .9,
                            save_dir: str = None) -> list[tuple[int, int]]:
         """
-        Review and re-classify images with prediction accuracy below threshold. Currently, only supports three levels,
-        0 (no growth), 1 (poor growth), 2 (good growth), as described in Gerada et al. (2024), Microbiology Spectrum.
+        Review and re-classify images with prediction accuracy below threshold. Classes should be zero indexed (e.g.,
+        0, 1, 2). Currently, only supports up to 9.
         If save_dir provided then colony images will also be saved to a subdirectory (named after the new
         classification), to allow for future use in training.
 
-        Enter new classification for each image using 0/1/2 on keyboard, or press enter (or esc) to skip.
+        Enter new classification for each image using numbers (e.g., 0/1/2) on keyboard, press enter to skip,
+        press esc to stop reviewing the plate.
 
         :param threshold: Prediction threshold to identify inaccurate images
         :param save_dir: Directory to save re-classified images
         :return: List of indices of re-classified images
         """
-        codes = {48: 0, 49: 1, 50: 2, 27: "esc", 13: "enter"}
+        codes = {}
+        for ascii_code, class_code in zip(range(48, 58), range(0, 10)):
+            codes[ascii_code] = class_code
+        skip_codes = {13: "enter"}
+        stop_codes = {27: "esc"}
+        codes.update(skip_codes)
+        codes.update(stop_codes)
+
         inaccurate_images_indexes = self.get_inaccurate_images(threshold) 
         changed_log = []
-        for image_index in inaccurate_images_indexes: 
+        for image_index in inaccurate_images_indexes:
             image, stamp = self.get_colony_image(image_index)
             i, j = image_index
             growth = self.growth_matrix[i][j]
@@ -261,32 +269,48 @@ class Plate:
             print("Press enter to continue, or enter new classification: ")
             while True: 
                 input_key = cv2.waitKey()
-                if input_key not in codes: 
+                if input_key not in codes:
                     print("Input not recognised, please try again..")
                     continue
-                else: 
+                if input_key in stop_codes or input_key in skip_codes:
                     break
+                try:
+                    _ = self.get_key()[codes[input_key]]
+                except IndexError:
+                    print(f"Invalid input {codes[input_key]}: model key is {self.get_key()} [zero-indexed]")
+                    continue
+                break
+
             input_code = codes[input_key]
-            if input_code == "esc" or input_code == "enter" or self.get_key()[input_code] == growth:
+
+            if input_code in stop_codes.values():
+                print(f"Stopping review for this plate: {self}.")
+                break
+
+            if input_code in skip_codes.values():
                 print("Classification not changed.")
                 continue
-            else: 
-                # reassign growth
-                print(f"Reassigning image to {self.get_key()[input_code]}")
-                self.growth_matrix[i][j] = self.get_key()[input_code]
-                self.growth_code_matrix[i][j] = input_code
-                changed_log.append(image_index)
-                if save_dir: 
-                    if not os.path.exists(save_dir):
-                        print(f"Creating directory: {save_dir}")
-                        os.mkdir(save_dir)
-                    class_dir = os.path.join(save_dir, str(input_code))
-                    if not os.path.exists(class_dir): 
-                        print(f"Creating class subdirectory: {class_dir}")
-                        os.mkdir(class_dir)
-                    save_path = os.path.join(class_dir, stamp + ".jpg")
-                    print(f"Saving image to: {save_path}")
-                    cv2.imwrite(save_path, image)
+
+            if self.get_key()[input_code] == growth:
+                print("Classification unchanged.")
+                continue
+
+            # reassign growth
+            print(f"Reassigning image to {self.get_key()[input_code]}")
+            self.growth_matrix[i][j] = self.get_key()[input_code]
+            self.growth_code_matrix[i][j] = input_code
+            changed_log.append(image_index)
+            if save_dir:
+                if not os.path.exists(save_dir):
+                    print(f"Creating directory: {save_dir}")
+                    os.mkdir(save_dir)
+                class_dir = os.path.join(save_dir, str(input_code))
+                if not os.path.exists(class_dir):
+                    print(f"Creating class subdirectory: {class_dir}")
+                    os.mkdir(class_dir)
+                save_path = os.path.join(class_dir, stamp + ".jpg")
+                print(f"Saving image to: {save_path}")
+                cv2.imwrite(save_path, image)
         return changed_log
 
     def convert_growth_codes(self, key: list[str]) -> list[list[str]]:
@@ -530,7 +554,10 @@ class PlateSet:
         :return: List of indices of re-classified images
         """
         changed = [i.review_poor_images(threshold, save_dir) for i in self.get_all_plates()]
-        print(f"{len(changed)} images re-classified.")
+        n_changed = 0
+        for i in changed:
+            n_changed += len(i)
+        print(f"{n_changed} images re-classified.")
         return changed
 
     def get_csv_data(self) -> list[dict]:
@@ -571,7 +598,7 @@ def plate_set_from_dir(path: str,
                        model: Model,
                        **kwargs) -> PlateSet:
     """
-    Create a PlateSet from a directory of images. MIC and QC values are automatically calculated.
+    Create a PlateSet from a directory of images. Images are annotated using the provided model.
 
     :param path: directory containing plate images (.jpg) with filenames indicating antibiotic concentration
     :param drug: name of drug
@@ -583,6 +610,4 @@ def plate_set_from_dir(path: str,
     plates = [Plate(drug, get_conc_from_path(i), i, model=model, **kwargs) for i in image_paths]
     [i.annotate_images() for i in plates]
     output = PlateSet(plates)
-    output.calculate_mic()
-    output.generate_qc()
     return output

@@ -17,7 +17,7 @@ DRUG_NAME = "amikacin"
 MIN_CONCENTRATION = 0.0
 MAX_CONCENTRATION = 64.0
 TARGET_MIC_CSV = "../images/amikacin/amikacin_target_spectrum_model.csv"
-MIC_PLATES_PATH = path.join(IMAGES_PATH, DRUG_NAME)
+MIC_PLATES_PATH = path.join(IMAGES_PATH, "antimicrobials")
 TRAIN_ANNOTATIONS_PATH = "../images/annotations/train_binary/"
 TEST_ANNOTATIONS_PATH = "../images/annotations/test_binary/"
 IMAGE_WIDTH = 160
@@ -62,7 +62,7 @@ def poor_growth_image():
 
 @pytest.fixture
 def plates_images_paths():
-    return get_image_paths(MIC_PLATES_PATH)
+    return get_image_paths(path.join(MIC_PLATES_PATH, DRUG_NAME))
 
 
 @pytest.fixture

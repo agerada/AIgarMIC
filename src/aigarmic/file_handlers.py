@@ -6,12 +6,11 @@
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
 """Functions to facilitate working with image data files"""
-import pathlib
 
+import pathlib
 from aigarmic.utils import convertCV2toKeras
 import csv
 import os
-from os import path
 from typing import Optional, Union
 import cv2
 import keras.callbacks
