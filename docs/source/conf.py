@@ -19,22 +19,12 @@ release = '0.0.1'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    # "myst_nb",
-    # "autoapi.extension",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
     "sphinx.ext.viewcode"
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
-
-# import sys, os
-# sys.path.insert(0, os.path.abspath('../src/aigarmic'))
-
-
-# autoapi_dirs = ['../../src/']
-
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
