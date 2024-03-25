@@ -1,0 +1,8 @@
+imutils==0.5.4
+matplotlib==3.6.3
+numpy==1.26.4
+opencv-python==4.9.0.80
+pytest==8.1.1
+tensorflow==2.11.0; sys_platform != 'darwin' or platform_machine != 'arm64'
+tensorflow-macos==2.11.0; sys_platform == 'darwin' and platform_machine == 'arm64'
+scikit-learn==1.4.1.post1
