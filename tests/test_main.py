@@ -1,7 +1,8 @@
 import subprocess
-from tests.conftest import FIRST_LINE_MODEL_PATH, MIC_PLATES_PATH, DRUG_NAME
+from tests.conftest import FIRST_LINE_MODEL_PATH, MIC_PLATES_PATH, DRUG_NAME, PROJECT_ROOT
 import csv
 import pytest
+from os import path
 
 
 @pytest.mark.assets_required
@@ -10,8 +11,10 @@ def test_main(tmp_path):
     d.mkdir()
 
     # test that the main function runs without error
-    result = subprocess.run(["python", "../src/aigarmic/main.py", "-m", FIRST_LINE_MODEL_PATH,
-                             "-t", "binary", "-o", d / "output.csv",
+    result = subprocess.run(["python", path.join(PROJECT_ROOT, "src", "aigarmic", "main.py"),
+                             "-m", FIRST_LINE_MODEL_PATH,
+                             "-t", "binary",
+                             "-o", d / "output.csv",
                              MIC_PLATES_PATH])
     assert result.returncode == 0
     assert (d / "output.csv").exists()

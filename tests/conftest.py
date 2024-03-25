@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from aigarmic.model import BinaryModel, BinaryNestedModel
 from aigarmic.plate import Plate
@@ -7,19 +9,22 @@ from aigarmic.nn_design import model_design_spectrum_2024_binary_first_step
 import cv2
 from os import path
 
-FIRST_LINE_MODEL_PATH = "../models/spectrum_2024/growth_no_growth"
-SECOND_LINE_MODEL_PATH = "../models/spectrum_2024/good_growth_poor_growth"
-COLONY_IMAGE_PATH = "../images/single_colony.jpg"
-NO_COLONY_IMAGE_PATH = "../images/single_no_growth.jpg"
-POOR_GROWTH_IMAGE_PATH = "../images/single_poor_growth.jpg"
-IMAGES_PATH = "../images/"
+PROJECT_ROOT = path.abspath(path.join(path.dirname(__file__), os.pardir))
+ASSETS_DIR = PROJECT_ROOT
+
+FIRST_LINE_MODEL_PATH = path.join(ASSETS_DIR, "models", "spectrum_2024", "growth_no_growth")
+SECOND_LINE_MODEL_PATH = path.join(ASSETS_DIR, "models", "spectrum_2024", "good_growth_poor_growth")
+COLONY_IMAGE_PATH = path.join(ASSETS_DIR, "images", "single_colony.jpg")
+NO_COLONY_IMAGE_PATH = path.join(ASSETS_DIR, "images", "single_no_growth.jpg")
+POOR_GROWTH_IMAGE_PATH = path.join(ASSETS_DIR, "images", "single_poor_growth.jpg")
+IMAGES_PATH = path.join(ASSETS_DIR, "images")
 DRUG_NAME = "amikacin"
 MIN_CONCENTRATION = 0.0
 MAX_CONCENTRATION = 64.0
 MIC_PLATES_PATH = path.join(IMAGES_PATH, "antimicrobials")
 TARGET_MIC_CSV = path.join(MIC_PLATES_PATH, DRUG_NAME, "amikacin_target_spectrum_model.csv")
-TRAIN_ANNOTATIONS_PATH = "../images/annotations/train_binary/"
-TEST_ANNOTATIONS_PATH = "../images/annotations/test_binary/"
+TRAIN_ANNOTATIONS_PATH = path.join(ASSETS_DIR, "images", "annotations", "train_binary")
+TEST_ANNOTATIONS_PATH = path.join(ASSETS_DIR, "images", "annotations", "test_binary")
 IMAGE_WIDTH = 160
 IMAGE_HEIGHT = 160
 

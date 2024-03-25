@@ -5,12 +5,13 @@ from aigarmic.img_utils import get_image_paths
 import tensorflow as tf
 import pytest
 import csv
+from os import path
 
 
 @pytest.mark.assets_required
 def test_create_dataset_from_directory():
-    no_growth_images = get_image_paths(TRAIN_ANNOTATIONS_PATH + "0/")
-    growth_images = get_image_paths(TRAIN_ANNOTATIONS_PATH + "1/")
+    no_growth_images = get_image_paths(path.join(TRAIN_ANNOTATIONS_PATH, "0"))
+    growth_images = get_image_paths(path.join(TRAIN_ANNOTATIONS_PATH, "1"))
 
     train, val = create_dataset_from_directory(TRAIN_ANNOTATIONS_PATH,
                                                label_mode="binary",
