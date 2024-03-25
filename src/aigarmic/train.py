@@ -210,7 +210,10 @@ class ValidationThresholdCallback(tf.keras.callbacks.Callback):
         super().__init__()
         self.threshold = threshold
 
-    def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, logs=None) -> None:
+        """
+        Determines whether to stop training based on validation accuracy
+        """
         val_acc = logs["val_accuracy"]
         if val_acc >= self.threshold:
             self.model.stop_training = True
