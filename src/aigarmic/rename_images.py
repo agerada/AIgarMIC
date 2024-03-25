@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Filename: 	rename_images.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-03-23
@@ -11,24 +10,28 @@
 import argparse
 import os
 
+
 def rename_jpg(file_in, file_out): 
     if not file_in or not file_out: 
         return
     print(f"Renaming {file_in} to {file_out}")
     os.rename(file_in, file_out)
 
+
 def main(): 
-    parser = argparse.ArgumentParser(description='Script to batch rename images with halving value of drug concentration.')
+    parser = argparse.ArgumentParser(
+        description='Script to batch rename images with halving value of drug concentration.')
     parser.add_argument('directory', type=str, 
                         help="""
-                        Directory containing images. Images names should reflect the concentration order when sorted, e.g.:
+                        Directory containing images. Filenames should reflect the concentration order when sorted, e.g.:
                         image1 (no drug)
                         image2 (low concentration)
                         image3 (medium concentration)
-                        image4 (high concentration) 
+                        image4 (high concentration)
+                        etc..
                         """)
     parser.add_argument('starting_concentration', type=float, 
-                        help='Starting concentration that will be iteratively halved')
+                        help='Starting (max) concentration that will be iteratively halved')
     args = parser.parse_args()
 
     files = os.listdir(args.directory)
@@ -50,4 +53,5 @@ def main():
                    os.path.join(args.directory, f"{concentration}.jpg"))
         concentration /= 2
 
-main()
+if __name__ == '__main__':
+    main()

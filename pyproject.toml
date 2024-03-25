@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "AIgarMIC"
+version = "0.0.1"
+description = "Machine-learning assisted agar dilution MIC"
+authors = ["Alessandro Gerada"]
+license = "GPL-3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11"
+imutils = "0.5.4"
+matplotlib = "3.6.3"
+numpy = "1.26.4"
+opencv-python = "4.9.0.80"
+pytest = "8.1.1"
+tensorflow-macos = { version = "2.11.0", markers = "platform_system=='Darwin' and platform_machine=='arm64'"}
+tensorflow = { version = "2.11.0", markers = "platform_system!='Darwin' and platform_machine!='arm64'"}
+scikit-learn = "1.4.1.post1"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
+pytest-cov = "^5.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
