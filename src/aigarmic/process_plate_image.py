@@ -55,6 +55,7 @@ def split_by_grid(image: ndarray, n_rows: int = 8,
                   plate_name: Optional[str] = None) -> list[list[ndarray]]:
     """
     Split an agar plate image into individual colony sub-images using a grid overlay.
+
     :param image: image file loaded using cv2.imread
     :param n_rows: number of rows in the grid (columns will be inferred automatically)
     :param visualise_contours: if True, display the contours found (useful for validation)

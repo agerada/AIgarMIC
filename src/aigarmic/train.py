@@ -36,7 +36,7 @@ def train_binary(annotations_path,
     Train a binary classification model to differentiate between two classes of colony images.
 
     :param annotations_path: Path to directory containing annotated images, with subdirectories for each class (usually
-    '0' and '1')
+        '0' and '1')
     :param model_design: Keras model design (Sequential) to inform neural network architecture
     :param val_split: Validation split proportion
     :param image_width: Image width (pixels)
@@ -45,6 +45,7 @@ def train_binary(annotations_path,
     :param epochs: Max number of training epochs
     :param stop_training_threshold: Accuracy threshold at which to accept model and stop training
     :param learning_rate: Learning rate for the optimizer
+
     :return: Tuple containing trained model, class names, training history, and evaluation results
     """
     label_mode = "binary"
@@ -113,7 +114,7 @@ def train_softmax(annotations_path,
     Train a softmax classification model to differentiate between multiple classes (2 or more) of colony images.
 
     :param annotations_path: Path to directory containing annotated images, with subdirectories for each class
-    (e.g., '0', '1', '2', ...)
+        (e.g., '0', '1', '2', ...)
     :param model_design: Keras model design (Sequential) to inform neural network architecture
     :param val_split: Validation split proportion
     :param image_width: Image width (pixels)
@@ -121,6 +122,7 @@ def train_softmax(annotations_path,
     :param batch_size: Training batch size
     :param epochs: Max number of training epochs
     :param stop_training_threshold: Accuracy threshold at which to accept model and stop training
+
     :return: Tuple containing trained model, class names, training history, and evaluation results
     """
     label_mode = "int"

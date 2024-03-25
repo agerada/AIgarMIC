@@ -120,7 +120,9 @@ class Plate:
 
     def link_model(self, model: Model) -> None:
         """
-        model_image_x and model_image_y are the pixel dimensions used to train the model
+        Link model to plate for predictions
+
+        :param model: Model to link
         """
         print(f"linking model to plate {self.concentration}")
         self.model = model
