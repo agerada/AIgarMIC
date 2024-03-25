@@ -22,7 +22,7 @@ extensions = [
     # "myst_nb",
     # "autoapi.extension",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
+    # "sphinx.ext.autosummary",
     "sphinx.ext.viewcode"
 ]
 
