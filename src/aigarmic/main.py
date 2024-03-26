@@ -7,9 +7,8 @@
 
 """Script to process images"""
 import pathlib
-
 from process_plate_image import split_by_grid
-from plate import Plate, PlateSet, plate_set_from_dir
+from plate import plate_set_from_dir
 import argparse
 from img_utils import get_concentration_from_path, get_paths_from_directory
 import csv
