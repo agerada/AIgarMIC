@@ -8,12 +8,13 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src')))
+
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src', 'aigarmic')))
 
 project = 'AIgarMIC'
 copyright = '2024, Alessandro Gerada'
 author = 'Alessandro Gerada'
-release = '0.0.1'
+release = '0.0.2'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
