@@ -7,7 +7,7 @@ Submodules
 aigarmic.clean\_up\_annotations module
 --------------------------------------
 
-.. automodule:: aigarmic.clean_up_annotations
+.. automodule:: src.aigarmic.clean_up_annotations
    :members:
    :undoc-members:
    :show-inheritance:
