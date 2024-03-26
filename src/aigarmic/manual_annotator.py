@@ -14,7 +14,7 @@ annotate the image. Use the following key:
 The output is stored in annotations/
 """
 
-from aigarmic.img_utils import get_concentration_from_path, get_paths_from_directory
+from aigarmic._img_utils import get_concentration_from_path, get_paths_from_directory
 from aigarmic.plate import Plate
 import os
 import cv2  # pylint: disable=import-error

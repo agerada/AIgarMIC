@@ -19,9 +19,10 @@ def test_main(tmp_path):
     assert result.returncode == 0
     assert (d / "output.csv").exists()
 
-    with open(d / "output.csv", "r") as f:
+    with open(d / "output.csv", "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            print(row)
             assert row['Antibiotic'] == DRUG_NAME
             assert "MIC" in row
             assert "Position" in row

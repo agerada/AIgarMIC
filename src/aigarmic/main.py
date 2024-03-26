@@ -5,20 +5,17 @@
 # Copyright: 	Alessandro Gerada 2023
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
-"""Script to process images"""
+"""Script to predict MICs from agar dilution images. Use main.py -h for help."""
+
 import pathlib
 from aigarmic.process_plate_image import split_by_grid
 from aigarmic.plate import plate_set_from_dir
 import argparse
-from aigarmic.img_utils import get_concentration_from_path, get_paths_from_directory
+from aigarmic._img_utils import get_concentration_from_path, get_paths_from_directory
 import csv
 from aigarmic.model import SoftmaxModel, BinaryModel, BinaryNestedModel
 import sys
 import cv2  # pylint: disable=import-error
-
-MODEL_IMAGE_X = 160
-MODEL_IMAGE_Y = 160
-SUPPORTED_MODEL_TYPES = ['softmax', 'binary']
 
 
 def main():
@@ -47,7 +44,13 @@ def main():
     parser.add_argument("-s", "--softmax_classes", type=int,
                         help="Number of softmax classes for softmax classes that model predicts."
                              "Required if -t = softmax")
+    parser.add_argument("-d", "--dimensions", type=int, nargs=2, default=[160, 160],
+                        help="X and Y dimensions of images for model training [default = 160 160]")
     args = parser.parse_args()
+
+    model_image_x = args.dimensions[0]
+    model_image_y = args.dimensions[1]
+    supported_model_types = ['softmax', 'binary']
 
     plate_images_paths = get_paths_from_directory(args.directory)
 
@@ -82,8 +85,8 @@ def main():
                 print("Unable to recognise input, please try again..")
                 continue
 
-    if args.type_model not in SUPPORTED_MODEL_TYPES:
-        sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
+    if args.type_model not in supported_model_types:
+        sys.exit(f"Model type specified is not supported, please use one of {supported_model_types}")
 
     if args.type_model == 'softmax' and len(args.model) != 1:
         sys.exit(
@@ -102,24 +105,24 @@ def main():
     if args.type_model == 'softmax':
         # Since args.model is a list, un-list
         [path_to_model] = args.model
-        model = SoftmaxModel(path_to_model, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y,
+        model = SoftmaxModel(path_to_model, trained_x=model_image_x, trained_y=model_image_y,
                              key=[str(x) for x in range(args.softmax_classes)])
 
     elif args.type_model == 'binary' and len(args.model) == 2:
         class_names_first_line = ['No growth', 'Growth']
         class_names_second_line = ['Poor growth', 'Good growth']
-        first_line_model = BinaryModel(args.model[0], key=class_names_first_line, trained_x=MODEL_IMAGE_X,
-                                       trained_y=MODEL_IMAGE_Y)
-        second_line_model = BinaryModel(args.model[1], key=class_names_second_line, trained_x=MODEL_IMAGE_X,
-                                        trained_y=MODEL_IMAGE_Y)
+        first_line_model = BinaryModel(args.model[0], key=class_names_first_line, trained_x=model_image_x,
+                                       trained_y=model_image_y)
+        second_line_model = BinaryModel(args.model[1], key=class_names_second_line, trained_x=model_image_x,
+                                        trained_y=model_image_y)
         model = BinaryNestedModel(first_line_model, second_line_model, first_model_accuracy_acceptance=0.6,
                                   suppress_first_model_accuracy_check=True)
     elif args.type_model == 'binary' and len(args.model) == 1:
         class_names = ['No growth', 'Growth']
         model = BinaryModel(args.model[0], key=class_names,
-                            trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+                            trained_x=model_image_x, trained_y=model_image_y)
     else:
-        sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
+        sys.exit(f"Model type specified is not supported, please use one of {supported_model_types}")
 
     abx_superset = {}
     parent_path = pathlib.Path(args.directory)

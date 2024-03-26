@@ -3,9 +3,9 @@ import os
 import pytest
 from aigarmic.model import BinaryModel, BinaryNestedModel
 from aigarmic.plate import Plate
-from aigarmic.img_utils import get_image_paths, get_concentration_from_path
+from aigarmic._img_utils import get_image_paths, get_concentration_from_path
 from aigarmic.train import train_binary
-from aigarmic.nn_design import model_design_spectrum_2024_binary_first_step
+from aigarmic._nn_design import model_design_spectrum_2024_binary_first_step
 import cv2  # pylint: disable=import-error
 from os import path
 

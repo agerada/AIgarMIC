@@ -1,5 +1,5 @@
 from tests.conftest import MIC_PLATES_PATH, IMAGES_PATH, DRUG_NAME
-from aigarmic.img_utils import get_image_paths, convert_cv2_to_keras
+from aigarmic._img_utils import get_image_paths, convert_cv2_to_keras
 import pytest
 from os import path
 

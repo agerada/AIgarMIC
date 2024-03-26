@@ -5,20 +5,15 @@
 # Copyright: 	Alessandro Gerada 2023
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
-"""Script to batch the renaming of images"""
+"""Script to batch the renaming of a set of agar dilution images. Use rename_images.py -h for help."""
 
 import argparse
 import os
 
-
-def rename_jpg(file_in, file_out): 
-    if not file_in or not file_out: 
-        return
-    print(f"Renaming {file_in} to {file_out}")
-    os.rename(file_in, file_out)
+from aigarmic._img_utils import rename_jpg
 
 
-def main(): 
+def main():
     parser = argparse.ArgumentParser(
         description='Script to batch rename images with halving value of drug concentration.')
     parser.add_argument('directory', type=str, 
@@ -42,14 +37,14 @@ def main():
 
     files.sort()
     control_plate = files.pop(0)
-    rename_jpg(os.path.join(args.directory, control_plate), 
+    rename_jpg(os.path.join(args.directory, control_plate),
                os.path.join(args.directory, '0.jpg'))
 
     concentration = args.starting_concentration
 
     while files: 
         _file = files.pop()
-        rename_jpg(os.path.join(args.directory, _file), 
+        rename_jpg(os.path.join(args.directory, _file),
                    os.path.join(args.directory, f"{concentration}.jpg"))
         concentration /= 2
 

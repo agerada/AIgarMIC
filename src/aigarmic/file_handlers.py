@@ -7,7 +7,7 @@
 """Functions to facilitate working with image data files"""
 
 import pathlib
-from aigarmic.img_utils import convert_cv2_to_keras
+from aigarmic._img_utils import convert_cv2_to_keras
 import csv
 import os
 from typing import Optional, Union

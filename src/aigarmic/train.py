@@ -17,7 +17,6 @@ from tensorflow.keras.initializers import Constant
 import keras.callbacks
 from sklearn.utils import class_weight
 from tensorflow.keras import initializers
-
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
@@ -209,7 +208,7 @@ class ValidationThresholdCallback(tf.keras.callbacks.Callback):
         super().__init__()
         self.threshold = threshold
 
-    def on_epoch_end(self, logs=None) -> None:
+    def on_epoch_end(self, epoch, logs=None) -> None:
         """
         Determines whether to stop training based on validation accuracy
         """

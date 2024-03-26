@@ -6,8 +6,7 @@
 
 """Implementation of Model classes"""
 
-from aigarmic.img_utils import convert_cv2_to_keras
-
+from aigarmic._img_utils import convert_cv2_to_keras
 import tensorflow as tf
 import numpy as np
 from typing import Optional

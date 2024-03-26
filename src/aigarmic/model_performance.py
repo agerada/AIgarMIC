@@ -6,9 +6,9 @@
 # Copyright: 	Alessandro Gerada 2023
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
-"""Test the performance of a saved model on a set of colony images"""
+"""Test the performance of a saved model on a set of colony images. Use model_performance.py -h for help."""
 
-from aigarmic.img_utils import get_paths_from_directory
+from aigarmic._img_utils import get_paths_from_directory
 from aigarmic.model import BinaryModel
 import cv2  # pylint: disable=import-error
 import argparse

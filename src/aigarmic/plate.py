@@ -8,7 +8,7 @@
 from pathlib import Path
 from aigarmic.process_plate_image import split_by_grid
 from aigarmic.model import Model
-from aigarmic.img_utils import get_image_paths, get_concentration_from_path
+from aigarmic._img_utils import get_image_paths, get_concentration_from_path
 from typing import Optional, Union
 import cv2  # pylint: disable=import-error
 from random import randrange

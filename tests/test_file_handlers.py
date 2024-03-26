@@ -1,7 +1,7 @@
 from tests.conftest import TRAIN_ANNOTATIONS_PATH, TEST_ANNOTATIONS_PATH
 from aigarmic.file_handlers import create_dataset_from_directory, predict_colony_images_from_directory, \
     save_training_log
-from aigarmic.img_utils import get_image_paths
+from aigarmic._img_utils import get_image_paths
 import tensorflow as tf
 import pytest
 import csv
@@ -51,7 +51,7 @@ def test_predict_colony_images_from_directory(binary_nested_model_from_file, tmp
         assert i['predicted_class'] == i['true_class']
 
     # check file save also correct
-    with open(d / "test_dataset_log.csv", "r") as f:
+    with open(d / "test_dataset_log.csv", "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         for row in reader:
             assert row['predicted_class'] == row['true_class']
@@ -64,7 +64,7 @@ def test_save_training_log(binary_model_trained, tmp_path):
     d.mkdir()
     save_training_log(history, d / "test_dataset_log.csv")
 
-    with open(d / "test_dataset_log.csv", "r") as f:
+    with open(d / "test_dataset_log.csv", "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         for row in reader:
             assert float(row['loss']) >= 0

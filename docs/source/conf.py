@@ -35,3 +35,17 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 autoapi_dirs = ['../../src']
+
+
+def skip_submodules(app, what, name, obj, skip, options):
+    if name == "aigarmic.main":
+        skip = True
+    if name == "aigarmic._img_utils":
+        skip = True
+    if name == "aigarmic._nn_design":
+        skip = True
+    return skip
+
+
+def setup(sphinx):
+    sphinx.connect("autoapi-skip-member", skip_submodules)

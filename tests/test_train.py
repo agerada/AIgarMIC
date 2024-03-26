@@ -1,6 +1,6 @@
 from aigarmic.train import train_binary, train_softmax
 from tests.conftest import TRAIN_ANNOTATIONS_PATH
-from aigarmic.nn_design import model_design_spectrum_2024_binary_first_step
+from aigarmic._nn_design import model_design_spectrum_2024_binary_first_step
 import pytest
 
 
