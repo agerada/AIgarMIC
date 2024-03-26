@@ -11,7 +11,7 @@ from aigarmic.img_utils import convert_cv2_to_keras
 import csv
 import os
 from typing import Optional, Union
-import cv2
+import cv2  # pylint: disable=import-error
 import keras.callbacks
 import numpy as np
 import tensorflow as tf
@@ -107,7 +107,7 @@ def predict_colony_images_from_directory(directory: Optional[Union[str, pathlib.
                            "predicted_class": predicted_class,
                            "true_class": true_class})
     if save_path:
-        with open(save_path, "w") as file:
+        with open(save_path, "w", encoding="utf-8-sig") as file:
             writer = csv.DictWriter(file,
                                     fieldnames=['path', 'prediction', 'predicted_class', 'true_class'],
                                     extrasaction='ignore')
@@ -124,7 +124,7 @@ def save_training_log(model_history: keras.callbacks.History,
     :param model_history: Training history object
     :param save_path: Directory to save training log
     """
-    with open(save_path, "w") as file:
+    with open(save_path, "w", encoding="utf-8-sig") as file:
         writer = csv.writer(file)
         h = zip(
             model_history.history['accuracy'],

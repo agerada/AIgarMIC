@@ -62,7 +62,6 @@ def train_binary(annotations_path,
     num_classes = len(class_names)
     if num_classes != 2:
         raise ValueError("Binary classification requires 2 classes")
-    model_design = model_design
 
     full_dataset = image_dataset_from_directory(Path(annotations_path),
                                                 image_size=(image_height, image_width),
@@ -138,7 +137,7 @@ def train_softmax(annotations_path,
     num_classes = len(class_names)
     obs_dict = dict(zip(list(range(num_classes)), [0] * num_classes))
     all_class_obs = []
-    for i, j in train_dataset:
+    for _, j in train_dataset:
         for k in j:
             k_arr = k.numpy()
             obs_dict[k_arr] += 1
@@ -210,7 +209,7 @@ class ValidationThresholdCallback(tf.keras.callbacks.Callback):
         super().__init__()
         self.threshold = threshold
 
-    def on_epoch_end(self, epoch, logs=None) -> None:
+    def on_epoch_end(self, logs=None) -> None:
         """
         Determines whether to stop training based on validation accuracy
         """

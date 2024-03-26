@@ -8,7 +8,7 @@
 Image utility functions
 """
 from typing import Union
-import cv2
+import cv2  # pylint: disable=import-error
 import numpy as np
 import os
 import tensorflow as tf

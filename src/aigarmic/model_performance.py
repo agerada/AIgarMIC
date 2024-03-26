@@ -8,9 +8,9 @@
 
 """Test the performance of a saved model on a set of colony images"""
 
-from img_utils import get_paths_from_directory
-from model import BinaryModel
-import cv2
+from aigarmic.img_utils import get_paths_from_directory
+from aigarmic.model import BinaryModel
+import cv2  # pylint: disable=import-error
 import argparse
 
 

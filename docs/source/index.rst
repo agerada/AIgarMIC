@@ -12,6 +12,7 @@ AIgarMIC -- Machine-learning assisted agar dilution minimum inhibitory concentra
 
    installation
    introduction
+   developer
    modules
 
 Indices and tables

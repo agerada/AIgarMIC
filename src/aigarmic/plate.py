@@ -5,12 +5,12 @@
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
 """Class implementation for plates"""
-
+from pathlib import Path
 from aigarmic.process_plate_image import split_by_grid
 from aigarmic.model import Model
 from aigarmic.img_utils import get_image_paths, get_concentration_from_path
-from typing import Optional
-import cv2
+from typing import Optional, Union
+import cv2  # pylint: disable=import-error
 from random import randrange
 import numpy as np
 import os
@@ -418,7 +418,7 @@ class PlateSet:
                 matrices_shapes.append(np.shape(i.growth_code_matrix))
             except ValueError as e:
                 print(e)
-                raise ValueError(f"Plate {i} does not a matrix-shaped growth code matrix")
+                raise ValueError(f"Plate {i} does not a matrix-shaped growth code matrix") from e
 
         return True if all(i == matrices_shapes[0] for i in matrices_shapes) else False
 
@@ -595,7 +595,7 @@ class PlateSet:
                 f"concentrations: {[i.concentration for i in self.antibiotic_plates]}")
 
 
-def plate_set_from_dir(path: str,
+def plate_set_from_dir(path: Union[str, Path],
                        drug: str,
                        model: Model,
                        **kwargs) -> PlateSet:
@@ -610,6 +610,7 @@ def plate_set_from_dir(path: str,
     """
     image_paths = get_image_paths(path)
     plates = [Plate(drug, get_concentration_from_path(i), i, model=model, **kwargs) for i in image_paths]
-    [i.annotate_images() for i in plates]
+    for i in plates:
+        i.annotate_images()
     output = PlateSet(plates)
     return output

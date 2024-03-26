@@ -8,8 +8,8 @@
 """Script that cleans up duplicate images in annotation folders"""
 
 import argparse
-import cv2
-from img_utils import get_image_paths
+import cv2  # pylint: disable=import-error
+from aigarmic.img_utils import get_image_paths
 import numpy as np
 from os import remove
 
@@ -96,7 +96,7 @@ def main():
                 deleter.delete_file(i)
 
     if isinstance(images_paths, dict):
-        for k,v in images_paths.items(): 
+        for _, v in images_paths.items():
             _images_list = []
             for i in v: 
                 _image = cv2.imread(i)
@@ -104,6 +104,7 @@ def main():
                     _images_list.append(_image)
                 else: 
                     deleter.delete_file(i)
+
 
 if __name__ == "__main__":
     main()

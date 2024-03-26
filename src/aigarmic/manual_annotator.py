@@ -15,9 +15,9 @@ The output is stored in annotations/
 """
 
 from aigarmic.img_utils import get_concentration_from_path, get_paths_from_directory
+from aigarmic.plate import Plate
 import os
-import cv2
-from plate import Plate
+import cv2  # pylint: disable=import-error
 import argparse
 from random import choice
 from datetime import datetime
@@ -45,7 +45,7 @@ def main():
             try: 
                 concentration = get_concentration_from_path(path)
                 plates.append(Plate(abx, concentration, path, visualise_contours=False))
-            except Exception as e: 
+            except FileNotFoundError as e:
                 print(f"Error while trying to import {path}: ")
                 print(e)
 

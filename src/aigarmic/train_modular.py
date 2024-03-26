@@ -13,7 +13,8 @@ from aigarmic.nn_design import (model_design_spectrum_2024_binary_first_step,
                                 model_design_spectrum_2024_binary_second_step)
 from aigarmic.file_handlers import predict_colony_images_from_directory
 
-import os, cv2
+import os
+import cv2  # pylint: disable=import-error
 import argparse
 import pathlib
 import warnings
@@ -53,14 +54,14 @@ def main():
                      model_design_spectrum_2024_binary_second_step)
 
     if args.model_type == "binary":
-        model, classes, history, results = train_binary(annotations_path=annotated_images,
+        model, classes, history, _ = train_binary(annotations_path=annotated_images,
                                                         model_design=model_designs[args.complexity](IMAGE_WIDTH,
                                                                                                     IMAGE_HEIGHT),
                                                         image_width=IMAGE_WIDTH,
                                                         image_height=IMAGE_HEIGHT,
                                                         batch_size=BATCH_SIZE)
     elif args.model_type == "softmax":
-        model, classes, history, results = train_softmax(annotations_path=annotated_images,
+        model, classes, history, _ = train_softmax(annotations_path=annotated_images,
                                                          model_design=model_designs[args.complexity](IMAGE_WIDTH,
                                                                                                      IMAGE_HEIGHT),
                                                          image_width=IMAGE_WIDTH,

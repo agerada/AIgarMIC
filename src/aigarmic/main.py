@@ -7,14 +7,14 @@
 
 """Script to process images"""
 import pathlib
-from process_plate_image import split_by_grid
-from plate import plate_set_from_dir
+from aigarmic.process_plate_image import split_by_grid
+from aigarmic.plate import plate_set_from_dir
 import argparse
-from img_utils import get_concentration_from_path, get_paths_from_directory
+from aigarmic.img_utils import get_concentration_from_path, get_paths_from_directory
 import csv
-from model import SoftmaxModel, BinaryModel, BinaryNestedModel
+from aigarmic.model import SoftmaxModel, BinaryModel, BinaryNestedModel
 import sys
-import cv2
+import cv2  # pylint: disable=import-error
 
 MODEL_IMAGE_X = 160
 MODEL_IMAGE_Y = 160
@@ -44,6 +44,9 @@ def main():
     parser.add_argument("-c", "--check_contours", action="store_true", help="Check contours visually")
     parser.add_argument("-n", "--negative_codes", type=str,
                         help="Comma-separated list of no growth class codes for softmax model, e.g., 0,1 (default)")
+    parser.add_argument("-s", "--softmax_classes", type=int,
+                        help="Number of softmax classes for softmax classes that model predicts."
+                             "Required if -t = softmax")
     args = parser.parse_args()
 
     plate_images_paths = get_paths_from_directory(args.directory)
@@ -54,7 +57,9 @@ def main():
             for path in paths:
                 _image = cv2.imread(path)
                 try:
-                    split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_concentration_from_path(path)))
+                    split_by_grid(_image,
+                                  visualise_contours=True,
+                                  plate_name=abx + '_' + str(get_concentration_from_path(path)))
                 except ValueError as err:
                     print(err)
 
@@ -87,10 +92,18 @@ def main():
             """
         )
 
+    if args.type_model == 'softmax' and not args.softmax_classes:
+        sys.exit(
+            """
+            Softmax model requires the number of classes to be specified
+            """
+        )
+
     if args.type_model == 'softmax':
         # Since args.model is a list, un-list
         [path_to_model] = args.model
-        model = SoftmaxModel(path_to_model, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+        model = SoftmaxModel(path_to_model, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y,
+                             key=[str(x) for x in range(args.softmax_classes)])
 
     elif args.type_model == 'binary' and len(args.model) == 2:
         class_names_first_line = ['No growth', 'Growth']
@@ -129,7 +142,7 @@ def main():
         output_data = []
         for plate_set in abx_superset.values():
             output_data = output_data + plate_set.get_csv_data()
-        with open(args.output_file, 'w') as csvfile:
+        with open(args.output_file, 'w', encoding="utf-8-sig") as csvfile:
             writer = csv.DictWriter(csvfile, output_data[0].keys())
             writer.writeheader()
             writer.writerows(output_data)

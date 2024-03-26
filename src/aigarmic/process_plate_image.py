@@ -6,9 +6,9 @@
 
 """Pre-processing of agar plate images to extract individual colonies"""
 
-import cv2
+import cv2  # pylint: disable=import-error
 from imutils import contours
-from typing import Union, Optional
+from typing import Optional
 from numpy import ndarray, empty
 
 
