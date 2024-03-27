@@ -69,4 +69,3 @@ Errors related to ``cv2`` and ``tensorflow`` import can be ignored.
 7. Create a new release on GitHub and upload the built package.
 
 Check that documentation has updated correctly on readthedocs.io: https://aigarmic.readthedocs.io/en/latest/ (note that it may take a few minutes to update).
-

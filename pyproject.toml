@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aigarmic"
-version = "0.0.2"
+version = "0.1.0"
 description = "Machine-learning assisted agar dilution MIC"
 authors = ["Alessandro Gerada"]
 license = "GPL-3.0"

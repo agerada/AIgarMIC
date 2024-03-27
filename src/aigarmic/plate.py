@@ -22,8 +22,9 @@ class Plate:
     def __init__(self, drug: str,
                  concentration: float,
                  image_path: Optional[str] = None,
-                 n_row: int = 8,
-                 n_col: int = 12,
+                 n_row: Optional[int] = None,
+                 n_col: Optional[int] = None,
+                 growth_code_matrix: Optional[list[list[int]]] = None,
                  visualise_contours: bool = False,
                  model: Optional[Model] = None,
                  key: Optional[list[str]] = None) -> None:
@@ -42,8 +43,13 @@ class Plate:
         self.drug = drug
         self.concentration = concentration
         self.image_path = image_path
+
+        if image_path is not None:
+            if n_row is None or n_col is None:
+                raise ValueError("Plate dimensions must be provided if image path is provided")
         self.n_row = n_row
         self.n_col = n_col
+
         self.accuracy_matrix = None
         self.model = model
         self.key = None
@@ -57,7 +63,11 @@ class Plate:
             if self.model is not None:
                 self.key = self.model.get_key()
 
-        self.growth_code_matrix = None
+        if growth_code_matrix is not None:
+            self.add_growth_code_matrix(growth_code_matrix)
+        else:
+            self.growth_code_matrix = None
+
         self.growth_matrix = None
         self.score_matrix = None
         self.predictions_matrix = None
@@ -70,6 +80,54 @@ class Plate:
             self.image = cv2.imread(self.image_path)
             self.image_matrix = split_by_grid(self.image, self.n_row, visualise_contours=visualise_contours,
                                               plate_name=self.drug + '_' + str(self.concentration))
+
+    def add_growth_code_matrix(self, growth_code_matrix: list[list[int]]) -> None:
+        if not self.valid_growth_code_matrix(growth_code_matrix):
+            raise ValueError("Invalid growth code matrix")
+        self.growth_code_matrix = growth_code_matrix
+        dim_x, dim_y = self.matrix_dimensions(growth_code_matrix)
+        if self.n_row is not None or self.n_col is not None:
+            if dim_x != self.n_row or dim_y != self.n_col:
+                raise ValueError(f"Dimensions of growth code matrix do not match plate dimensions: "
+                                 f"{dim_x}x{dim_y} vs {self.n_row}x{self.n_col}")
+        else:
+            self.n_row = dim_x
+            self.n_col = dim_y
+
+    def valid_growth_code_matrix(self, growth_code_matrix: list[list[int]]) -> bool:
+        try:
+            self.matrix_dimensions(growth_code_matrix)
+        except ValueError as e:
+            return False
+
+        for i in growth_code_matrix:
+            for j in i:
+                if not isinstance(j, int):
+                    return False
+                if self.key is not None:
+                    if j > len(self.key):
+                        return False
+                if j < 0:
+                    return False
+        return True
+
+    @staticmethod
+    def matrix_dimensions(matrix: list[list[int]]) -> tuple[int, ...]:
+        """
+        Get dimensions of a matrix
+
+        :param matrix: matrix to get dimensions of
+        :raises ValueError: if matrix is not 2D or is not a valid matrix
+        :return: tuple of dimensions
+        """
+        try:
+            dimensions = np.shape(matrix)
+            if len(dimensions) != 2:
+                raise ValueError(f"Matrix {matrix} is not a 2D matrix")
+            else:
+                return dimensions
+        except ValueError as e:
+            raise ValueError(f"Matrix {matrix} is not a valid matrix") from e
 
     def split_images(self, visualise_contours: bool = False) -> None:
         """
@@ -415,7 +473,7 @@ class PlateSet:
         matrices_shapes = []
         for i in self.get_all_plates():
             try:
-                matrices_shapes.append(np.shape(i.growth_code_matrix))
+                matrices_shapes.append(i.matrix_dimensions(i.growth_code_matrix))
             except ValueError as e:
                 print(e)
                 raise ValueError(f"Plate {i} does not a matrix-shaped growth code matrix") from e
@@ -598,6 +656,8 @@ class PlateSet:
 def plate_set_from_dir(path: Union[str, Path],
                        drug: str,
                        model: Model,
+                       n_row: int = 8,
+                       n_col: int = 12,
                        **kwargs) -> PlateSet:
     """
     Create a PlateSet from a directory of images. Images are annotated using the provided model.
@@ -609,7 +669,13 @@ def plate_set_from_dir(path: Union[str, Path],
     :return: PlateSet with MIC and QC values
     """
     image_paths = get_image_paths(path)
-    plates = [Plate(drug, get_concentration_from_path(i), i, model=model, **kwargs) for i in image_paths]
+    plates = [Plate(drug,
+                    concentration=get_concentration_from_path(i),
+                    image_path=i,
+                    model=model,
+                    n_row=n_row,
+                    n_col=n_col,
+                    **kwargs) for i in image_paths]
     for i in plates:
         i.annotate_images()
     output = PlateSet(plates)

@@ -112,18 +112,18 @@ def test_generate_qc():
         Plate('genta', 0.),
     ]
 
-    test_qc_plates[0].growth_code_matrix = [
+    test_qc_plates[0].add_growth_code_matrix([
         [3, 2],
-        [0, 1]]
-    test_qc_plates[1].growth_code_matrix = [
+        [0, 1]])
+    test_qc_plates[1].add_growth_code_matrix([
         [0, 2],
-        [3, 2]]
-    test_qc_plates[2].growth_code_matrix = [
+        [3, 2]])
+    test_qc_plates[2].add_growth_code_matrix([
         [3, 2],
-        [2, 3]]
-    test_qc_plates[3].growth_code_matrix = [
+        [2, 3]])
+    test_qc_plates[3].add_growth_code_matrix([
         [3, 3],
-        [3, 2]]
+        [3, 2]])
 
     test_qc_plate_set = PlateSet(test_qc_plates)
     test_qc_plate_set.calculate_mic(no_growth_key_items=(0, 1))
@@ -190,4 +190,30 @@ def test_get_colony_image(plates_list):
         single_plate.get_colony_image((12, 14))
 
 
+def test_plate_with_growth_code():
+    test_plate = Plate('genta', 64.,
+                       growth_code_matrix=[[0, 2],
+                                           [1, 0]],
+                       n_col=2, n_row=2)
+    assert test_plate.growth_code_matrix[0][0] == 0
+    assert test_plate.growth_code_matrix[1][1] == 0
+    assert test_plate.growth_code_matrix[0][1] == 2
+    assert test_plate.growth_code_matrix[1][0] == 1
 
+    with pytest.raises(ValueError):
+        test_plate.add_growth_code_matrix([[0, 2],
+                                           [1, 0],
+                                           [1, 0, 2]])
+
+    with pytest.raises(ValueError):
+        test_plate.add_growth_code_matrix([
+            [[0, 2],
+             [0, 2],
+             [0, 2],
+             [1, 0]
+             ]
+        ])
+
+    with pytest.raises(ValueError):
+        test_plate.add_growth_code_matrix([[-1, 2],
+                                           [1, 0]])

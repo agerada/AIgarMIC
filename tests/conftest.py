@@ -72,7 +72,12 @@ def plates_images_paths():
 
 @pytest.fixture
 def plates_list(plates_images_paths):
-    return [Plate(DRUG_NAME, get_concentration_from_path(i), i, visualise_contours=False) for i in plates_images_paths]
+    return [Plate(DRUG_NAME,
+                  get_concentration_from_path(i),
+                  image_path=i,
+                  visualise_contours=False,
+                  n_row=8,
+                  n_col=12) for i in plates_images_paths]
 
 
 @pytest.fixture
@@ -88,22 +93,21 @@ def basic_plates():
         Plate('genta', 0.),
     ]
 
-    output[0].growth_code_matrix = [
+    output[0].add_growth_code_matrix([
         [0, 2],
-        [0, 0]]
-    output[1].growth_code_matrix = [
+        [0, 0]])
+    output[1].add_growth_code_matrix([
         [1, 2],
-        [2, 0]]
-    output[2].growth_code_matrix = [
+        [2, 0]])
+    output[2].add_growth_code_matrix([
         [2, 2],
-        [1, 0]]
-    output[3].growth_code_matrix = [
+        [1, 0]])
+    output[3].add_growth_code_matrix([
         [2, 2],
-        [2, 0]]
-
-    output[4].growth_code_matrix = [
+        [2, 0]])
+    output[4].add_growth_code_matrix([
         [2, 2],
-        [2, 0]]
+        [2, 0]])
 
     return output
 

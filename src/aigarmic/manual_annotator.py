@@ -44,7 +44,8 @@ def main():
         for path in paths: 
             try: 
                 concentration = get_concentration_from_path(path)
-                plates.append(Plate(abx, concentration, path, visualise_contours=False))
+                plates.append(Plate(abx, concentration, path, visualise_contours=False,
+                                    n_row=8, n_col=12))
             except FileNotFoundError as e:
                 print(f"Error while trying to import {path}: ")
                 print(e)
