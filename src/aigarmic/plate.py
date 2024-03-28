@@ -83,7 +83,8 @@ class Plate:
 
     def add_growth_code_matrix(self, growth_code_matrix: list[list[int]]) -> None:
         if not self.valid_growth_code_matrix(growth_code_matrix):
-            raise ValueError("Invalid growth code matrix")
+            raise ValueError("Invalid growth code matrix, please provide a 2D growth coe matrix (list), values"
+                             "must be integers, and cannot be negative")
         self.growth_code_matrix = growth_code_matrix
         dim_x, dim_y = self.matrix_dimensions(growth_code_matrix)
         if self.n_row is not None or self.n_col is not None:
@@ -97,7 +98,7 @@ class Plate:
     def valid_growth_code_matrix(self, growth_code_matrix: list[list[int]]) -> bool:
         try:
             self.matrix_dimensions(growth_code_matrix)
-        except ValueError as e:
+        except ValueError:
             return False
 
         for i in growth_code_matrix:
@@ -105,14 +106,14 @@ class Plate:
                 if not isinstance(j, int):
                     return False
                 if self.key is not None:
-                    if j > len(self.key):
+                    if j > len(self.key) - 1:
                         return False
                 if j < 0:
                     return False
         return True
 
     @staticmethod
-    def matrix_dimensions(matrix: list[list[int]]) -> tuple[int, ...]:
+    def matrix_dimensions(matrix) -> tuple[int, ...]:
         """
         Get dimensions of a matrix
 
@@ -665,6 +666,8 @@ def plate_set_from_dir(path: Union[str, Path],
     :param path: directory containing plate images (.jpg) with filenames indicating antibiotic concentration
     :param drug: name of drug
     :param model: model file to use for predictions
+    :param n_row: number of rows in the plates
+    :param n_col: number of columns in the plates
     :param kwargs: additional keyword arguments to pass to Plate constructor
     :return: PlateSet with MIC and QC values
     """

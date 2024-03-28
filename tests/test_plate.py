@@ -206,6 +206,7 @@ def test_plate_with_growth_code():
                                            [1, 0, 2]])
 
     with pytest.raises(ValueError):
+        # more than two-dimensional matrix is not allowed
         test_plate.add_growth_code_matrix([
             [[0, 2],
              [0, 2],
@@ -215,5 +216,24 @@ def test_plate_with_growth_code():
         ])
 
     with pytest.raises(ValueError):
+        # negative growth codes are not allowed
         test_plate.add_growth_code_matrix([[-1, 2],
                                            [1, 0]])
+
+    with pytest.raises(ValueError):
+        # growth codes must be integers
+        test_plate.add_growth_code_matrix([[0., 2.],
+                                           [1., 3.]])
+
+    # test provision of appropriate key does not raise error
+    _ = Plate('genta', 64.,
+              growth_code_matrix=[[0, 1],
+                                  [1, 0]],
+              key=["No growth", "Growth"],)
+
+    with pytest.raises(ValueError):
+        # growth codes cannot exceed the length of the key
+        _ = Plate('genta', 64.,
+                  growth_code_matrix=[[0, 2],
+                                      [1, 0]],
+                  key=["No growth", "Growth"],)
