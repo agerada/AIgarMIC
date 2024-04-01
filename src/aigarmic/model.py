@@ -10,9 +10,10 @@ from aigarmic._img_utils import convert_cv2_to_keras
 import tensorflow as tf
 import numpy as np
 from typing import Optional
+from abc import ABC, abstractmethod
 
 
-class Model:
+class Model(ABC):
     def __init__(self, path: str,
                  trained_x: int,
                  trained_y: int,
@@ -64,6 +65,7 @@ class Model:
         else:
             return self.key
 
+    @abstractmethod
     def predict(self, image):
         raise NotImplementedError
 
