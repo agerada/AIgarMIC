@@ -7,26 +7,33 @@
 
 """Script to batch the renaming of a set of agar dilution images. Use rename_images.py -h for help."""
 
+from aigarmic._img_utils import rename_jpg
 import argparse
+from argparse import RawTextHelpFormatter
 import os
 
-from aigarmic._img_utils import rename_jpg
+
+def rename_images_parser():
+    parser = argparse.ArgumentParser(
+        description='Script to batch rename images with halving value of drug concentration.',
+        formatter_class=RawTextHelpFormatter)
+    parser.add_argument('directory', type=str,
+                        help="""
+                            Directory containing images.
+                            Filenames should reflect the concentration order when sorted, e.g.:
+                                - image1 (no drug)
+                                - image2 (low concentration)
+                                - image3 (medium concentration)
+                                - image4 (high concentration)
+                            etc..
+                            """)
+    parser.add_argument('starting_concentration', type=float,
+                        help='Starting (max) concentration that will be iteratively halved')
+    return parser
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Script to batch rename images with halving value of drug concentration.')
-    parser.add_argument('directory', type=str, 
-                        help="""
-                        Directory containing images. Filenames should reflect the concentration order when sorted, e.g.:
-                        image1 (no drug)
-                        image2 (low concentration)
-                        image3 (medium concentration)
-                        image4 (high concentration)
-                        etc..
-                        """)
-    parser.add_argument('starting_concentration', type=float, 
-                        help='Starting (max) concentration that will be iteratively halved')
+    parser = rename_images_parser()
     args = parser.parse_args()
 
     files = os.listdir(args.directory)

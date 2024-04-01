@@ -12,14 +12,19 @@ import cv2  # pylint: disable=import-error
 from aigarmic._img_utils import get_image_paths, Deleter, in_list
 
 
-def main():
+def clean_up_annotations_parser():
     parser = argparse.ArgumentParser("""
-    Clean up duplicate images in annotation folders
-    """)
+        Clean up duplicate images in annotation folders
+        """)
     parser.add_argument('input_dir', type=str,
                         help="Input directory - can contain subdirectory of images which will be processed separately")
     parser.add_argument('-q', '--quiet', action='store_true',
                         help="Suppress file deletion warnings (CAUTION)")
+    return parser
+
+
+def main():
+    parser = clean_up_annotations_parser()
     args = parser.parse_args()
 
     images_paths = get_image_paths(args.input_dir)

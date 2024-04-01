@@ -22,7 +22,8 @@ release = '0.0.2'
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
-    "autoapi.extension"
+    "autoapi.extension",
+    "sphinxarg.ext"
 ]
 
 templates_path = ['_templates']
@@ -38,13 +39,17 @@ autoapi_dirs = ['../../src']
 
 
 def skip_submodules(app, what, name, obj, skip, options):
-    if name == "aigarmic.main":
-        skip = True
-    if name == "aigarmic._img_utils":
-        skip = True
-    if name == "aigarmic._nn_design":
-        skip = True
-    return skip
+    skip_these = {
+        "aigarmic._img_utils": True,
+        "aigarmic._nn_design": True,
+        "aigarmic.clean_up_annotations": True,
+        "aigarmic.main": True,
+        "aigarmic.manual_annotator": True,
+        "aigarmic.model_performance": True,
+        "aigarmic.rename_images": True,
+        "aigarmic.train_modular": True
+    }
+    return skip_these.get(name, skip)
 
 
 def setup(sphinx):

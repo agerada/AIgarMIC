@@ -65,5 +65,67 @@ by simply naming each antimicrobial concentration in the filename, e.g.,::
 Note that ``0.jpg`` is the control image, with no antimicrobial.
 
 To facilitate image renaming, ``AIgarMIC`` provides a script that can be used to rename images in the correct format,
-assuming that the filenames are in sequential order (and images were taken in the correct sequence, either ascending or
-descending concentrations).
+assuming that the filenames are in lexical and sequential order (and images were taken in the correct sequence, either
+ascending or descending concentrations). See :ref:`rename_images`.
+
+Model/s
+^^^^^^^
+
+To calculate MICs, ``AIgarMIC`` needs to determine whether there is growth at every position in each agar plate. To do,
+this we will provide a pre-trained model to make these predictions. We will use the models provided in the optional
+assets dataset, available in ``models/spectrum_2024/``. There, we will find two models:
+
+    `growth_no_growth/`
+    `good_growth_poor_growth/`
+
+These are pre-trained `keras` models described in the validation manuscript: http://dx.doi.org/10.1128/spectrum.04209-23
+The models are convolutional neural networks which predict whether a colony image has growth and the quality of growth
+respectively. The models are therefore binary classifiers. ``AIgarMIC`` can use the models in sequence (first-step and
+second-step) to determine growth.
+
+Installation
+------------
+
+To install ``AIgarMIC`` and its dependencies, please refer to the installation guide: :doc:`installation`.
+
+Running `AIgarMIC`
+------------------
+
+Firstly, activate the `AIgarMIC` virtual environment that was created during installation. For example, for a `conda`
+environment, this can be done by running::
+
+    conda activate AIgarMIC
+
+Then, run the following command to calculate MICs for the provided example dataset:
+
+.. code-block:: bash
+
+    cd path/to/optional_assets
+    AIgarMIC -m models/spectrum_2024/growth_no_growth/ models/spectrum_2024/good_growth_poor_growth/ -t binary -n 0,1 -d 160 160 -o output/results.csv images/antimicrobials/amikacin
+
+Where,
+
+        - ``-m``: the path to the models to be used. We are using a two-step model, therefore provide two paths.
+        - ``-t``: the type of model to be used. In this case, we are using binary models.
+        - ``-n``: the growth codes that should be counted as negative growth. The models described in the manuscript annotate images with the following codes: 0 (no growth), 1 (good growth), 2 (poor growth). In this case, we are considering no growth (0) and good growth (1) as negative growth.
+        - ``-d``: the dimensions of the images. In this case, the images are 160x160 pixels.
+        - ``-o``: the output file where the results will be saved.
+        - ``images/antimicrobials/amikacin``: the path to the images to be analysed (the only positional argument)
+
+`AIgarMIC` supports multiple antimicrobials, under the same folder structure. To get help, use:
+
+.. code-block:: bash
+
+    AIgarMIC -h
+
+Conclusion
+----------
+
+On inspection of ``output/results.csv``, we find MICs for each strain position. Results are provided with plate
+positions that correspond to a 96-well micro-plate. This script currently only supports 96-position inoculations.
+In addition to MICs, we also get a quality assurance score (QC) for each MIC, where:
+
+    - ``'P'``: PASS -- no anomalies detected,
+    - ``'F'``: FAIL -- no growth in the negative control plate that does not have antimicrobial (note that the negative control position `should` FAIL),
+    - ``'W'``: WARNING -- changes in growth patterns is not as expected; generally this means that plates have the following pattern: growth -> no growth -> growth (as concentrations increase); results should be checked to confirm.
+

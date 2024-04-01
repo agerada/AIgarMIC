@@ -6,6 +6,14 @@ authors = ["Alessandro Gerada"]
 license = "GPL-3.0"
 readme = "README.md"
 
+[tool.poetry.scripts]
+AIgarMIC = "aigarmic.main:main"
+clean_up_annotations = "aigarmic.clean_up_annotations:main"
+manual_annotator = "aigarmic.manual_annotator:main"
+model_performance = "aigarmic.model_performance:main"
+rename_images = "aigarmic.rename_images:main"
+train_modular = "aigarmic.train_modular:main"
+
 [tool.poetry.dependencies]
 python = ">=3.9,<3.11"
 imutils = ">=0.5"
@@ -17,6 +25,7 @@ tensorflow-macos = { version = ">=2.11,<=2.15", markers = "platform_system=='Dar
 tensorflow = { version = ">=2.11,<=2.15", markers = "platform_system!='Darwin' and platform_machine!='arm64'"}
 scikit-learn = ">=1.4"
 sphinx = ">=7.2"
+sphinx-argparse = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
 

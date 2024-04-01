@@ -18,17 +18,17 @@ import sys
 import cv2  # pylint: disable=import-error
 
 
-def main():
+def main_parser():
     parser = argparse.ArgumentParser(description="Main script to interpret agar dilution MICs",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('directory', type=str, help="""
-        Directory containing images to process, arranged in sub-folders by antibiotic name, e.g.,: \n
-        \t directory/ \n
-        \t \t antibiotic1_name/ \n
-        \t \t \t 0.jpg \n
-        \t \t \t 0.125.jpg \n
-        \t \t \t 0.25.jpg \n
-        """)
+            Directory containing images to process, arranged in sub-folders by antibiotic name, e.g.,: \n
+            \t directory/ \n
+            \t \t antibiotic1_name/ \n
+            \t \t \t 0.jpg \n
+            \t \t \t 0.125.jpg \n
+            \t \t \t 0.25.jpg \n
+            """)
     parser.add_argument("-m", "--model", type=str, nargs="*",
                         help="Specify one or more directories containing tensorflow model/s for image classification")
     parser.add_argument("-t", "--type_model", type=str, default="binary",
@@ -46,6 +46,11 @@ def main():
                              "Required if -t = softmax")
     parser.add_argument("-d", "--dimensions", type=int, nargs=2, default=[160, 160],
                         help="X and Y dimensions of images for model training [default = 160 160]")
+    return parser
+
+
+def main():
+    parser = main_parser()
     args = parser.parse_args()
 
     model_image_x = args.dimensions[0]

@@ -14,7 +14,7 @@ import cv2  # pylint: disable=import-error
 import argparse
 
 
-def main():
+def model_performance_parser():
     parser = argparse.ArgumentParser(description="Evaluate saved model performance")
     parser.add_argument("model_path", type=str, help="Path to the model")
     parser.add_argument("annotations_path", type=str, help="Path to the annotations to test")
@@ -24,6 +24,11 @@ def main():
                         help="Height of the images that the model was trained on [default=160]")
     parser.add_argument("-t", "--threshold", type=float, default=0.95,
                         help="Accuracy threshold, to highlight low accuracy predictions [default=0.95]")
+    return parser
+
+
+def main():
+    parser = model_performance_parser()
     args = parser.parse_args()
 
     images = get_paths_from_directory(args.annotations_path)

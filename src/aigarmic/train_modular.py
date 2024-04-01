@@ -19,10 +19,10 @@ import pathlib
 import warnings
 
 
-def main():
+def train_modular_parser():
     parser = argparse.ArgumentParser("""
-    This script loads images from annotations directory and trains ML to classify colony growth.
-    """)
+        This script loads images from annotations directory and trains ML to classify colony growth.
+        """)
     parser.add_argument("annotations", type=str,
                         help="Directory containing annotated images")
     parser.add_argument("-v", "--visualise", action="store_true",
@@ -44,6 +44,11 @@ def main():
                         help="Batch size for training [default] = 64")
     parser.add_argument("-d", "--dimensions", type=int, nargs=2, default=[160, 160],
                         help="X and Y dimensions of images for model training [default = 160 160]")
+    return parser
+
+
+def main():
+    parser = train_modular_parser()
     args = parser.parse_args()
 
     image_width = args.dimensions[0]
