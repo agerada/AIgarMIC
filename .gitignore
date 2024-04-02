@@ -9,6 +9,7 @@ new_annotations/
 example_plates/
 test_run/
 results/
+pypi_token.txt
 
 ############## PYTHON ################
 # Byte-compiled / optimized / DLL files
