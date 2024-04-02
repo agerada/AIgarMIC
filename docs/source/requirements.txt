@@ -121,7 +121,8 @@ tensorboard-data-server==0.7.2
 tensorboard-plugin-wit==1.8.1
 tensorflow-estimator==2.15.0
 tensorflow-io-gcs-filesystem==0.36.0
-tensorflow-macos==2.15.0
+tensorflow==2.15.0; sys_platform != 'darwin' or platform_machine != 'arm64'
+tensorflow-macos==2.15.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 termcolor==2.4.0
 threadpoolctl==3.4.0
 tomli==2.0.1
