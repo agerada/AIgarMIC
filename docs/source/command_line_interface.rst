@@ -5,7 +5,7 @@ Command-line Interface
 -------------------------------------------
 
 .. argparse::
-   :filename: ../src/aigarmic/main.py
+   :module: aigarmic.main
    :func: main_parser
    :prog: main
 
