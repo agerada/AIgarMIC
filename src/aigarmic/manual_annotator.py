@@ -14,21 +14,26 @@ annotate the image. Use the following key:
 The output is stored in annotations/
 """
 
-from aigarmic.img_utils import get_concentration_from_path, get_paths_from_directory
+from aigarmic.file_handlers import get_concentration_from_path, get_paths_from_directory
+from aigarmic.plate import Plate
 import os
-import cv2
-from plate import Plate
+import cv2  # pylint: disable=import-error
 import argparse
 from random import choice
 from datetime import datetime
 
 
-def main(): 
+def manual_annotator_parser():
     parser = argparse.ArgumentParser(description="Manually annotate plate images")
     parser.add_argument('input_directory', type=str,
                         help="Directory containing plate images")
     parser.add_argument('-o', '--output_directory', type=str, default='annotations/',
                         help='Path to store annotation output files')
+    return parser
+
+
+def main(): 
+    parser = manual_annotator_parser()
     args = parser.parse_args()
     codes = {}
     for ascii_code, class_code in zip(range(48, 58), range(0, 10)):
@@ -44,8 +49,9 @@ def main():
         for path in paths: 
             try: 
                 concentration = get_concentration_from_path(path)
-                plates.append(Plate(abx, concentration, path, visualise_contours=False))
-            except Exception as e: 
+                plates.append(Plate(abx, concentration, path, visualise_contours=False,
+                                    n_row=8, n_col=12))
+            except FileNotFoundError as e:
                 print(f"Error while trying to import {path}: ")
                 print(e)
 

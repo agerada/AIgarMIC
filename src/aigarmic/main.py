@@ -5,34 +5,30 @@
 # Copyright: 	Alessandro Gerada 2023
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
-"""Script to process images"""
+"""Script to predict MICs from agar dilution images. Use main.py -h for help."""
+
 import pathlib
-
-from process_plate_image import split_by_grid
-from plate import Plate, PlateSet, plate_set_from_dir
+from aigarmic.process_plate_image import split_by_grid
+from aigarmic.plate import plate_set_from_dir
 import argparse
-from img_utils import get_concentration_from_path, get_paths_from_directory
+from aigarmic.file_handlers import get_concentration_from_path, get_paths_from_directory
 import csv
-from model import SoftmaxModel, BinaryModel, BinaryNestedModel
+from aigarmic.model import SoftmaxModel, BinaryModel, BinaryNestedModel
 import sys
-import cv2
-
-MODEL_IMAGE_X = 160
-MODEL_IMAGE_Y = 160
-SUPPORTED_MODEL_TYPES = ['softmax', 'binary']
+import cv2  # pylint: disable=import-error
 
 
-def main():
+def main_parser():
     parser = argparse.ArgumentParser(description="Main script to interpret agar dilution MICs",
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('directory', type=str, help="""
-        Directory containing images to process, arranged in sub-folders by antibiotic name, e.g.,: \n
-        \t directory/ \n
-        \t \t antibiotic1_name/ \n
-        \t \t \t 0.jpg \n
-        \t \t \t 0.125.jpg \n
-        \t \t \t 0.25.jpg \n
-        """)
+            Directory containing images to process, arranged in sub-folders by antibiotic name, e.g.,: \n
+            \t directory/ \n
+            \t \t antibiotic1_name/ \n
+            \t \t \t 0.jpg \n
+            \t \t \t 0.125.jpg \n
+            \t \t \t 0.25.jpg \n
+            """)
     parser.add_argument("-m", "--model", type=str, nargs="*",
                         help="Specify one or more directories containing tensorflow model/s for image classification")
     parser.add_argument("-t", "--type_model", type=str, default="binary",
@@ -44,8 +40,22 @@ def main():
                              "0.0 checks no images [default]; 1.0 checks all images.")
     parser.add_argument("-c", "--check_contours", action="store_true", help="Check contours visually")
     parser.add_argument("-n", "--negative_codes", type=str,
-                        help="Comma-separated list of no growth class codes for softmax model, e.g., 0,1 (default)")
+                        help="Comma-separated list of no growth class codes for model, e.g., 0,1 (default=0)")
+    parser.add_argument("-s", "--softmax_classes", type=int,
+                        help="Number of softmax classes for softmax classes that model predicts."
+                             "Required if -t = softmax")
+    parser.add_argument("-d", "--dimensions", type=int, nargs=2, default=[160, 160],
+                        help="X and Y dimensions of images for model training [default = 160 160]")
+    return parser
+
+
+def main():
+    parser = main_parser()
     args = parser.parse_args()
+
+    model_image_x = args.dimensions[0]
+    model_image_y = args.dimensions[1]
+    supported_model_types = ['softmax', 'binary']
 
     plate_images_paths = get_paths_from_directory(args.directory)
 
@@ -55,9 +65,11 @@ def main():
             for path in paths:
                 _image = cv2.imread(path)
                 try:
-                    split_by_grid(_image, visualise_contours=True, plate_name=abx + '_' + str(get_concentration_from_path(path)))
-                except ValueError as err:
-                    print(err)
+                    split_by_grid(_image,
+                                  visualise_contours=True,
+                                  plate_name=abx + '_' + str(get_concentration_from_path(path)))
+                except ValueError as e:
+                    raise ValueError from e
 
         pos_replies = ['y', 'yes', 'ye']
         neg_replies = ['n', 'no']
@@ -78,8 +90,8 @@ def main():
                 print("Unable to recognise input, please try again..")
                 continue
 
-    if args.type_model not in SUPPORTED_MODEL_TYPES:
-        sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
+    if args.type_model not in supported_model_types:
+        sys.exit(f"Model type specified is not supported, please use one of {supported_model_types}")
 
     if args.type_model == 'softmax' and len(args.model) != 1:
         sys.exit(
@@ -88,26 +100,34 @@ def main():
             """
         )
 
+    if args.type_model == 'softmax' and not args.softmax_classes:
+        sys.exit(
+            """
+            Softmax model requires the number of classes to be specified
+            """
+        )
+
     if args.type_model == 'softmax':
         # Since args.model is a list, un-list
         [path_to_model] = args.model
-        model = SoftmaxModel(path_to_model, trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+        model = SoftmaxModel(path_to_model, trained_x=model_image_x, trained_y=model_image_y,
+                             key=[str(x) for x in range(args.softmax_classes)])
 
     elif args.type_model == 'binary' and len(args.model) == 2:
         class_names_first_line = ['No growth', 'Growth']
         class_names_second_line = ['Poor growth', 'Good growth']
-        first_line_model = BinaryModel(args.model[0], key=class_names_first_line, trained_x=MODEL_IMAGE_X,
-                                       trained_y=MODEL_IMAGE_Y)
-        second_line_model = BinaryModel(args.model[1], key=class_names_second_line, trained_x=MODEL_IMAGE_X,
-                                        trained_y=MODEL_IMAGE_Y)
+        first_line_model = BinaryModel(args.model[0], key=class_names_first_line, trained_x=model_image_x,
+                                       trained_y=model_image_y)
+        second_line_model = BinaryModel(args.model[1], key=class_names_second_line, trained_x=model_image_x,
+                                        trained_y=model_image_y)
         model = BinaryNestedModel(first_line_model, second_line_model, first_model_accuracy_acceptance=0.6,
                                   suppress_first_model_accuracy_check=True)
     elif args.type_model == 'binary' and len(args.model) == 1:
         class_names = ['No growth', 'Growth']
         model = BinaryModel(args.model[0], key=class_names,
-                            trained_x=MODEL_IMAGE_X, trained_y=MODEL_IMAGE_Y)
+                            trained_x=model_image_x, trained_y=model_image_y)
     else:
-        sys.exit(f"Model type specified is not supported, please use one of {SUPPORTED_MODEL_TYPES}")
+        sys.exit(f"Model type specified is not supported, please use one of {supported_model_types}")
 
     abx_superset = {}
     parent_path = pathlib.Path(args.directory)
@@ -123,14 +143,16 @@ def main():
             ng_codes = [int(x) for x in args.negative_codes.split(",")]
             plate_set.calculate_mic(no_growth_key_items=tuple(ng_codes))
         else:
-            plate_set.calculate_mic()
+            print("Warning: negative growth codes not specified, assuming any growth is positive."
+                  "Please use -n to specify negative codes")
+            plate_set.calculate_mic(no_growth_key_items=tuple([0]))
         plate_set.generate_qc()
 
     if args.output_file:
         output_data = []
         for plate_set in abx_superset.values():
             output_data = output_data + plate_set.get_csv_data()
-        with open(args.output_file, 'w') as csvfile:
+        with open(args.output_file, 'w', encoding="utf-8-sig") as csvfile:
             writer = csv.DictWriter(csvfile, output_data[0].keys())
             writer.writeheader()
             writer.writerows(output_data)

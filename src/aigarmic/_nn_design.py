@@ -1,4 +1,4 @@
-# Filename: 	nn_design.py
+# Filename: 	_nn_design.py
 # Author: 	Alessandro Gerada
 # Date: 	2023-08-11
 # Copyright: 	Alessandro Gerada 2023

@@ -1,6 +1,6 @@
 from aigarmic.process_plate_image import find_threshold_value, split_by_grid
 from tests.conftest import plates_images_paths
-import cv2
+import cv2  # pylint: disable=import-error
 import pytest
 
 

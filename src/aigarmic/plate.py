@@ -5,12 +5,13 @@
 # Email: 	alessandro.gerada@liverpool.ac.uk
 
 """Class implementation for plates"""
-
+from pathlib import Path
 from aigarmic.process_plate_image import split_by_grid
 from aigarmic.model import Model
-from aigarmic.img_utils import get_image_paths, get_concentration_from_path
-from typing import Optional
-import cv2
+from aigarmic._img_utils import get_image_paths
+from aigarmic.file_handlers import get_concentration_from_path
+from typing import Optional, Union
+import cv2  # pylint: disable=import-error
 from random import randrange
 import numpy as np
 import os
@@ -22,8 +23,9 @@ class Plate:
     def __init__(self, drug: str,
                  concentration: float,
                  image_path: Optional[str] = None,
-                 n_row: int = 8,
-                 n_col: int = 12,
+                 n_row: Optional[int] = None,
+                 n_col: Optional[int] = None,
+                 growth_code_matrix: Optional[list[list[int]]] = None,
                  visualise_contours: bool = False,
                  model: Optional[Model] = None,
                  key: Optional[list[str]] = None) -> None:
@@ -42,8 +44,13 @@ class Plate:
         self.drug = drug
         self.concentration = concentration
         self.image_path = image_path
+
+        if image_path is not None:
+            if n_row is None or n_col is None:
+                raise ValueError("Plate dimensions must be provided if image path is provided")
         self.n_row = n_row
         self.n_col = n_col
+
         self.accuracy_matrix = None
         self.model = model
         self.key = None
@@ -55,9 +62,16 @@ class Plate:
             self.key = key
         else:
             if self.model is not None:
-                self.key = self.model.get_key()
+                try:
+                    self.key = self.model.get_key()
+                except LookupError:
+                    warn(f"No key found for linked model: {self.model}")
 
-        self.growth_code_matrix = None
+        if growth_code_matrix is not None:
+            self.add_growth_code_matrix(growth_code_matrix)
+        else:
+            self.growth_code_matrix = None
+
         self.growth_matrix = None
         self.score_matrix = None
         self.predictions_matrix = None
@@ -70,6 +84,55 @@ class Plate:
             self.image = cv2.imread(self.image_path)
             self.image_matrix = split_by_grid(self.image, self.n_row, visualise_contours=visualise_contours,
                                               plate_name=self.drug + '_' + str(self.concentration))
+
+    def add_growth_code_matrix(self, growth_code_matrix: list[list[int]]) -> None:
+        if not self.valid_growth_code_matrix(growth_code_matrix):
+            raise ValueError("Invalid growth code matrix, please provide a 2D growth coe matrix (list), values"
+                             "must be integers, and cannot be negative")
+        self.growth_code_matrix = growth_code_matrix
+        dim_x, dim_y = self.matrix_dimensions(growth_code_matrix)
+        if self.n_row is not None or self.n_col is not None:
+            if dim_x != self.n_row or dim_y != self.n_col:
+                raise ValueError(f"Dimensions of growth code matrix do not match plate dimensions: "
+                                 f"{dim_x}x{dim_y} vs {self.n_row}x{self.n_col}")
+        else:
+            self.n_row = dim_x
+            self.n_col = dim_y
+
+    def valid_growth_code_matrix(self, growth_code_matrix: list[list[int]]) -> bool:
+        try:
+            self.matrix_dimensions(growth_code_matrix)
+        except ValueError:
+            return False
+
+        for i in growth_code_matrix:
+            for j in i:
+                if not isinstance(j, int):
+                    return False
+                if self.key is not None:
+                    if j > len(self.key) - 1:
+                        return False
+                if j < 0:
+                    return False
+        return True
+
+    @staticmethod
+    def matrix_dimensions(matrix) -> tuple[int, ...]:
+        """
+        Get dimensions of a matrix
+
+        :param matrix: matrix to get dimensions of
+        :raises ValueError: if matrix is not 2D or is not a valid matrix
+        :return: tuple of dimensions
+        """
+        try:
+            dimensions = np.shape(matrix)
+            if len(dimensions) != 2:
+                raise ValueError(f"Matrix {matrix} is not a 2D matrix")
+            else:
+                return dimensions
+        except ValueError as e:
+            raise ValueError(f"Matrix {matrix} is not a valid matrix") from e
 
     def split_images(self, visualise_contours: bool = False) -> None:
         """
@@ -112,17 +175,16 @@ class Plate:
                 i, j = index
                 image = self.image_matrix[i][j]
             except KeyError as e:
-                print(f"Invalid index provided to get_colony_image: {index}")
-                print(e)
-                raise e
+                raise KeyError(f"Invalid index provided to get_colony_image: {index}") from e
         code = self.drug + "_" + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
         return image, code
 
     def link_model(self, model: Model) -> None:
         """
-        model_image_x and model_image_y are the pixel dimensions used to train the model
+        Link model to plate for predictions
+
+        :param model: Model to link
         """
-        print(f"linking model to plate {self.concentration}")
         self.model = model
         self.model_image_x = model.trained_x
         self.model_image_y = model.trained_y
@@ -161,8 +223,7 @@ class Plate:
         :param model: linked model to use for predictions
         :return: Two-dimensional list of growth annotations
         """
-        print(f"annotating plate images - {self.concentration}")
-        if not self.image_matrix: 
+        if not self.image_matrix:
             raise LookupError(
                 """
                 Unable to find an image_matrix associated with this plate. 
@@ -189,11 +250,20 @@ class Plate:
         for row in self.image_matrix: 
             for image in row: 
                 prediction_data = model.predict(image)
-                temp_predictions_row.append(prediction_data['prediction'])
-                temp_score_row.append(prediction_data['score'])
+                if 'growth_code' not in prediction_data:
+                    raise ValueError("Model predictions dict must contain 'growth_code'")
+                temp_predictions_row.append(prediction_data.get('prediction', None))
+                temp_score_row.append(prediction_data.get('score', None))
                 temp_growth_code_rows.append(prediction_data['growth_code'])
-                temp_growth_rows.append(prediction_data['growth'])
-                temp_accuracy_row.append(prediction_data['accuracy'])
+                _growth = None
+                if 'growth' not in prediction_data:
+                    try:
+                        key = model.get_key()
+                        _growth = key[prediction_data['growth_code']]
+                    except LookupError:
+                        pass
+                temp_growth_rows.append(_growth)
+                temp_accuracy_row.append(prediction_data.get('accuracy', 1.))
             self.predictions_matrix.append(temp_predictions_row)
             self.score_matrix.append(temp_score_row)
             self.growth_matrix.append(temp_growth_rows)
@@ -373,13 +443,17 @@ class PlateSet:
 
         if key is not None:
             self.key = key
-        _list_of_keys = [i.get_key() for i in plates_list]
-        if not all(i == _list_of_keys[0] for i in _list_of_keys):
-            raise ValueError("Plates supplied to PlateSet have different growth keys")
-        if not _list_of_keys:
-            raise ValueError("Plates supplied to PlateSet do not have associated key")
-        if key is None:
-            self.key = _list_of_keys[0]
+        else:
+            _list_of_keys = []
+            try:
+                _list_of_keys = [i.get_key() for i in plates_list]
+                self.key = _list_of_keys[0]
+            except LookupError:
+                warn(f"No key provided to PlateSet")
+            if not all(i == _list_of_keys[0] for i in _list_of_keys):
+                raise ValueError("Plates supplied to PlateSet have different growth keys")
+            if not _list_of_keys:
+                self.key = None
 
         drug_names = [i.drug for i in plates_list]
         if len(set(drug_names)) > 1:
@@ -413,10 +487,9 @@ class PlateSet:
         matrices_shapes = []
         for i in self.get_all_plates():
             try:
-                matrices_shapes.append(np.shape(i.growth_code_matrix))
+                matrices_shapes.append(i.matrix_dimensions(i.growth_code_matrix))
             except ValueError as e:
-                print(e)
-                raise ValueError(f"Plate {i} does not a matrix-shaped growth code matrix")
+                raise ValueError(f"Plate {i} does not a matrix-shaped growth code matrix") from e
 
         return True if all(i == matrices_shapes[0] for i in matrices_shapes) else False
 
@@ -454,7 +527,7 @@ class PlateSet:
                         output[i][j] = mic
         return output
 
-    def calculate_mic(self, no_growth_key_items: tuple[int, ...] = (0, 1)) -> np.array:
+    def calculate_mic(self, no_growth_key_items: tuple[int, ...]) -> np.array:
         """
         Calculate MIC matrix using image predictions.
         Sets self.mic_matrix
@@ -504,8 +577,7 @@ class PlateSet:
         qc_matrix = np.full(self.mic_matrix.shape, fill_value="", dtype=str)
 
         if self.positive_control_plate is None:
-            print(f"*Warning* - {repr(self)} does not contain a positive control plate.")
-            print("QC not valid.")
+            warn(f"*Warning* - {repr(self)} does not contain a positive control plate.")
         else:
             for i, row in enumerate(self.positive_control_plate.growth_code_matrix):
                 for j, item in enumerate(row):
@@ -535,7 +607,7 @@ class PlateSet:
                     if flips > 1:
                         qc_matrix[i][j] = "W"
         else:
-            print(f"*Warning* - {repr(self)} has insufficient plates for full QC")
+            warn(f"*Warning* - {repr(self)} has insufficient plates for full QC")
         self.qc_matrix = qc_matrix
         return qc_matrix
 
@@ -593,9 +665,11 @@ class PlateSet:
                 f"concentrations: {[i.concentration for i in self.antibiotic_plates]}")
 
 
-def plate_set_from_dir(path: str,
+def plate_set_from_dir(path: Union[str, Path],
                        drug: str,
                        model: Model,
+                       n_row: int = 8,
+                       n_col: int = 12,
                        **kwargs) -> PlateSet:
     """
     Create a PlateSet from a directory of images. Images are annotated using the provided model.
@@ -603,11 +677,20 @@ def plate_set_from_dir(path: str,
     :param path: directory containing plate images (.jpg) with filenames indicating antibiotic concentration
     :param drug: name of drug
     :param model: model file to use for predictions
+    :param n_row: number of rows in the plates
+    :param n_col: number of columns in the plates
     :param kwargs: additional keyword arguments to pass to Plate constructor
     :return: PlateSet with MIC and QC values
     """
     image_paths = get_image_paths(path)
-    plates = [Plate(drug, get_concentration_from_path(i), i, model=model, **kwargs) for i in image_paths]
-    [i.annotate_images() for i in plates]
+    plates = [Plate(drug,
+                    concentration=get_concentration_from_path(i),
+                    image_path=i,
+                    model=model,
+                    n_row=n_row,
+                    n_col=n_col,
+                    **kwargs) for i in image_paths]
+    for i in plates:
+        i.annotate_images()
     output = PlateSet(plates)
     return output

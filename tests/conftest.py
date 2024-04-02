@@ -1,12 +1,14 @@
+import csv
 import os
 
 import pytest
 from aigarmic.model import BinaryModel, BinaryNestedModel
 from aigarmic.plate import Plate
-from aigarmic.img_utils import get_image_paths, get_concentration_from_path
+from aigarmic._img_utils import get_image_paths
+from aigarmic.file_handlers import get_concentration_from_path
 from aigarmic.train import train_binary
-from aigarmic.nn_design import model_design_spectrum_2024_binary_first_step
-import cv2
+from aigarmic._nn_design import model_design_spectrum_2024_binary_first_step
+import cv2  # pylint: disable=import-error
 from os import path
 
 PROJECT_ROOT = path.abspath(path.join(path.dirname(__file__), os.pardir))
@@ -72,7 +74,12 @@ def plates_images_paths():
 
 @pytest.fixture
 def plates_list(plates_images_paths):
-    return [Plate(DRUG_NAME, get_concentration_from_path(i), i, visualise_contours=False) for i in plates_images_paths]
+    return [Plate(DRUG_NAME,
+                  get_concentration_from_path(i),
+                  image_path=i,
+                  visualise_contours=False,
+                  n_row=8,
+                  n_col=12) for i in plates_images_paths]
 
 
 @pytest.fixture
@@ -88,22 +95,21 @@ def basic_plates():
         Plate('genta', 0.),
     ]
 
-    output[0].growth_code_matrix = [
+    output[0].add_growth_code_matrix([
         [0, 2],
-        [0, 0]]
-    output[1].growth_code_matrix = [
+        [0, 0]])
+    output[1].add_growth_code_matrix([
         [1, 2],
-        [2, 0]]
-    output[2].growth_code_matrix = [
+        [2, 0]])
+    output[2].add_growth_code_matrix([
         [2, 2],
-        [1, 0]]
-    output[3].growth_code_matrix = [
+        [1, 0]])
+    output[3].add_growth_code_matrix([
         [2, 2],
-        [2, 0]]
-
-    output[4].growth_code_matrix = [
+        [2, 0]])
+    output[4].add_growth_code_matrix([
         [2, 2],
-        [2, 0]]
+        [2, 0]])
 
     return output
 
@@ -119,3 +125,11 @@ def binary_model_trained():
                         epochs=10)
 
 
+@pytest.fixture
+def target_mic_spectrum():
+    target = {}
+    with open(TARGET_MIC_CSV, "r", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            target[row["Position"]] = row["MIC"]
+    return target

@@ -6,9 +6,9 @@
 
 """Pre-processing of agar plate images to extract individual colonies"""
 
-import cv2
+import cv2  # pylint: disable=import-error
 from imutils import contours
-from typing import Union, Optional
+from typing import Optional
 from numpy import ndarray, empty
 
 
@@ -55,6 +55,7 @@ def split_by_grid(image: ndarray, n_rows: int = 8,
                   plate_name: Optional[str] = None) -> list[list[ndarray]]:
     """
     Split an agar plate image into individual colony sub-images using a grid overlay.
+
     :param image: image file loaded using cv2.imread
     :param n_rows: number of rows in the grid (columns will be inferred automatically)
     :param visualise_contours: if True, display the contours found (useful for validation)
@@ -75,8 +76,6 @@ def split_by_grid(image: ndarray, n_rows: int = 8,
 
     if not grid_contours:
         raise ValueError("Unable to find contours threshold that returns correct number of colony images")
-    else:
-        print(f"Using {threshold_value} threshold value")
 
     # Sort contours, starting left to right
     (grid_contours, _) = contours.sort_contours(grid_contours, method="left-to-right")

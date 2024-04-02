@@ -1,6 +1,11 @@
 from aigarmic.plate import Plate, PlateSet, plate_set_from_dir
-from tests.conftest import (DRUG_NAME, MIN_CONCENTRATION, MAX_CONCENTRATION, TARGET_MIC_CSV, MIC_PLATES_PATH,
-                            basic_plates)
+from tests.conftest import (DRUG_NAME,
+                            MIN_CONCENTRATION,
+                            MAX_CONCENTRATION,
+                            TARGET_MIC_CSV,
+                            MIC_PLATES_PATH,
+                            basic_plates,
+                            target_mic_spectrum)
 from os import path
 import numpy as np
 import csv
@@ -30,27 +35,21 @@ def test_annotate_images(plates_list, binary_nested_model_from_file):
 
 
 @pytest.mark.assets_required
-def test_plate_set(binary_nested_model_from_file):
+def test_plate_set(binary_nested_model_from_file, target_mic_spectrum):
     plate_set = plate_set_from_dir(path=path.join(MIC_PLATES_PATH, DRUG_NAME),
                                    drug=DRUG_NAME,
                                    model=binary_nested_model_from_file)
     assert isinstance(plate_set, PlateSet)
 
-    plate_set.calculate_mic()
+    plate_set.calculate_mic(no_growth_key_items=tuple([0, 1]))
     plate_set.generate_qc()
-
-    with open(TARGET_MIC_CSV, "r", encoding='utf-8-sig') as f:
-        target_mic_values = []
-        reader = csv.DictReader(f)
-        for line in reader:
-            target_mic_values.append(line)
 
     # end-to-end validation, starting with images of multiple antibiotic concentrations, and ending with a
     # MIC and QC values. Compare to results that were reported in Gerada et al. 2024 Microbiology Spectrum paper.
     predicted_data = plate_set.get_csv_data()
     predicted_data = [{k: v for k, v in i.items() if k != "QC"} for i in predicted_data]
-    for target, prediction in zip(target_mic_values, predicted_data):
-        assert target == prediction
+    for prediction in predicted_data:
+        assert prediction["MIC"] == target_mic_spectrum[prediction["Position"]]
 
 
 def test_convert_growth_codes(basic_plates):
@@ -88,7 +87,7 @@ def test_calculate_mic(basic_plates):
         i.set_key(_key)
         i.convert_growth_codes(key=_key)
     basic_plate_set = PlateSet(basic_plates)
-    basic_plate_set.calculate_mic()
+    basic_plate_set.calculate_mic(no_growth_key_items=tuple([0, 1]))
     basic_plate_set.generate_qc()
 
     target_mic = [["64.0", ">128.0"],
@@ -112,18 +111,18 @@ def test_generate_qc():
         Plate('genta', 0.),
     ]
 
-    test_qc_plates[0].growth_code_matrix = [
+    test_qc_plates[0].add_growth_code_matrix([
         [3, 2],
-        [0, 1]]
-    test_qc_plates[1].growth_code_matrix = [
+        [0, 1]])
+    test_qc_plates[1].add_growth_code_matrix([
         [0, 2],
-        [3, 2]]
-    test_qc_plates[2].growth_code_matrix = [
+        [3, 2]])
+    test_qc_plates[2].add_growth_code_matrix([
         [3, 2],
-        [2, 3]]
-    test_qc_plates[3].growth_code_matrix = [
+        [2, 3]])
+    test_qc_plates[3].add_growth_code_matrix([
         [3, 3],
-        [3, 2]]
+        [3, 2]])
 
     test_qc_plate_set = PlateSet(test_qc_plates)
     test_qc_plate_set.calculate_mic(no_growth_key_items=(0, 1))
@@ -190,4 +189,50 @@ def test_get_colony_image(plates_list):
         single_plate.get_colony_image((12, 14))
 
 
+def test_plate_with_growth_code():
+    test_plate = Plate('genta', 64.,
+                       growth_code_matrix=[[0, 2],
+                                           [1, 0]],
+                       n_col=2, n_row=2)
+    assert test_plate.growth_code_matrix[0][0] == 0
+    assert test_plate.growth_code_matrix[1][1] == 0
+    assert test_plate.growth_code_matrix[0][1] == 2
+    assert test_plate.growth_code_matrix[1][0] == 1
 
+    with pytest.raises(ValueError):
+        test_plate.add_growth_code_matrix([[0, 2],
+                                           [1, 0],
+                                           [1, 0, 2]])
+
+    with pytest.raises(ValueError):
+        # more than two-dimensional matrix is not allowed
+        test_plate.add_growth_code_matrix([
+            [[0, 2],
+             [0, 2],
+             [0, 2],
+             [1, 0]
+             ]
+        ])
+
+    with pytest.raises(ValueError):
+        # negative growth codes are not allowed
+        test_plate.add_growth_code_matrix([[-1, 2],
+                                           [1, 0]])
+
+    with pytest.raises(ValueError):
+        # growth codes must be integers
+        test_plate.add_growth_code_matrix([[0., 2.],
+                                           [1., 3.]])
+
+    # test provision of appropriate key does not raise error
+    _ = Plate('genta', 64.,
+              growth_code_matrix=[[0, 1],
+                                  [1, 0]],
+              key=["No growth", "Growth"],)
+
+    with pytest.raises(ValueError):
+        # growth codes cannot exceed the length of the key
+        _ = Plate('genta', 64.,
+                  growth_code_matrix=[[0, 2],
+                                      [1, 0]],
+                  key=["No growth", "Growth"],)
