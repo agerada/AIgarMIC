@@ -53,17 +53,35 @@ Errors related to ``cv2`` and ``tensorflow`` import can be ignored.
     make doctest
     make html
 
-4. Build the package by running:
+4. Update dependencies in ``requirements.txt`` by running:
 
 .. code-block:: bash
 
-    poetry build
+    pip freeze > requirements.txt
+    pip freeze > docs/source/requirements.txt
 
-5. Update release version in ``pyproject.toml``:
+If developing using macOS, change the following line:
+
+``tensorflow==2.15.0``
+
+to:
+
+``tensorflow==2.15.0; sys_platform != 'darwin' or platform_machine != 'arm64'``
+``tensorflow-macos==2.15.0; sys_platform == 'darwin' and platform_machine == 'arm64'``
+
+This allows platform-agnostic use.
+
+4. Update release version in ``pyproject.toml``:
 
 .. code-block:: bash
 
     poetry version patch
+
+5. Build the package by running:
+
+.. code-block:: bash
+
+    poetry build
 
 6. Commit changes and push to the repository.
 
