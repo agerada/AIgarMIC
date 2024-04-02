@@ -14,10 +14,31 @@ from abc import ABC, abstractmethod
 
 
 class Model(ABC):
-    def __init__(self, path: str,
-                 trained_x: int,
-                 trained_y: int,
-                 key: Optional[list[str]]) -> None:
+    def __init__(self, key: Optional[list[str]]):
+        self.key = key
+
+    def get_key(self) -> list[str]:
+        """
+        Return key to convert model output to human-readable label
+        :return:
+        """
+        if not self.key:
+            raise LookupError(
+                """
+                Unable to find an interpretation key to convert scores to label. Please provide one
+                on Model class construction
+                """
+            )
+        else:
+            return self.key
+
+    @abstractmethod
+    def predict(self, image) -> dict:
+        raise NotImplementedError
+
+
+class KerasModel(Model):
+    def __init__(self, path: str, trained_x: int, trained_y: int, key: Optional[list[str]]) -> None:
         """
         Base class for keras model to interpret colony image growth. Optionally provide a key to convert model output
         to a growth label, e.g.,
@@ -41,6 +62,7 @@ class Model(ABC):
             self.key = inferred_key
         self.trained_x = trained_x
         self.trained_y = trained_y
+        super().__init__(key)
 
     def load_model(self, path: str) -> None:
         """
@@ -50,27 +72,11 @@ class Model(ABC):
         """
         self.keras_data = tf.keras.models.load_model(path)
 
-    def get_key(self) -> list[str]:
-        """
-        Return key to convert model output to human-readable label
-        :return:
-        """
-        if not self.key:
-            raise LookupError(
-                """
-                Unable to find an interpretation key to convert scores to label. Please provide one
-                on Model class construction
-                """
-            )
-        else:
-            return self.key
-
-    @abstractmethod
-    def predict(self, image):
+    def predict(self, image: np.ndarray) -> dict:
         raise NotImplementedError
 
 
-class SoftmaxModel(Model):
+class SoftmaxModel(KerasModel):
     """
     SoftmaxModel is a one-stop model when more than one growth category is present, e.g.:
     ['No growth', 'Poor growth', 'Good growth']
@@ -79,6 +85,7 @@ class SoftmaxModel(Model):
     def predict(self, image: np.ndarray) -> dict:
         """
         Predict growth category from image
+
         :param image: loaded using cv2.imread
         :return: dictionary with keys 'prediction', 'score', 'growth_code', 'growth', 'accuracy'
         """
@@ -92,7 +99,7 @@ class SoftmaxModel(Model):
         return output
 
 
-class BinaryModel(Model):
+class BinaryModel(KerasModel):
     def __init__(self, path: str,
                  trained_x: int,
                  trained_y: int,

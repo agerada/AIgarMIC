@@ -1,9 +1,11 @@
+import csv
 import os
 
 import pytest
 from aigarmic.model import BinaryModel, BinaryNestedModel
 from aigarmic.plate import Plate
-from aigarmic._img_utils import get_image_paths, get_concentration_from_path
+from aigarmic._img_utils import get_image_paths
+from aigarmic.file_handlers import get_concentration_from_path
 from aigarmic.train import train_binary
 from aigarmic._nn_design import model_design_spectrum_2024_binary_first_step
 import cv2  # pylint: disable=import-error
@@ -123,3 +125,11 @@ def binary_model_trained():
                         epochs=10)
 
 
+@pytest.fixture
+def target_mic_spectrum():
+    target = {}
+    with open(TARGET_MIC_CSV, "r", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            target[row["Position"]] = row["MIC"]
+    return target

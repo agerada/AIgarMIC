@@ -11,7 +11,7 @@ import pathlib
 from aigarmic.process_plate_image import split_by_grid
 from aigarmic.plate import plate_set_from_dir
 import argparse
-from aigarmic._img_utils import get_concentration_from_path, get_paths_from_directory
+from aigarmic.file_handlers import get_concentration_from_path, get_paths_from_directory
 import csv
 from aigarmic.model import SoftmaxModel, BinaryModel, BinaryNestedModel
 import sys
@@ -40,7 +40,7 @@ def main_parser():
                              "0.0 checks no images [default]; 1.0 checks all images.")
     parser.add_argument("-c", "--check_contours", action="store_true", help="Check contours visually")
     parser.add_argument("-n", "--negative_codes", type=str,
-                        help="Comma-separated list of no growth class codes for softmax model, e.g., 0,1 (default)")
+                        help="Comma-separated list of no growth class codes for model, e.g., 0,1 (default=0)")
     parser.add_argument("-s", "--softmax_classes", type=int,
                         help="Number of softmax classes for softmax classes that model predicts."
                              "Required if -t = softmax")
@@ -68,8 +68,8 @@ def main():
                     split_by_grid(_image,
                                   visualise_contours=True,
                                   plate_name=abx + '_' + str(get_concentration_from_path(path)))
-                except ValueError as err:
-                    print(err)
+                except ValueError as e:
+                    raise ValueError from e
 
         pos_replies = ['y', 'yes', 'ye']
         neg_replies = ['n', 'no']
@@ -143,7 +143,9 @@ def main():
             ng_codes = [int(x) for x in args.negative_codes.split(",")]
             plate_set.calculate_mic(no_growth_key_items=tuple(ng_codes))
         else:
-            plate_set.calculate_mic()
+            print("Warning: negative growth codes not specified, assuming any growth is positive."
+                  "Please use -n to specify negative codes")
+            plate_set.calculate_mic(no_growth_key_items=tuple([0]))
         plate_set.generate_qc()
 
     if args.output_file:

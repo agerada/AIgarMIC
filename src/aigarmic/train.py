@@ -33,10 +33,12 @@ def train_binary(annotations_path,
                  learning_rate: float = .0001) -> tuple[Sequential, list[str], keras.callbacks.History, list]:
     """
     Train a binary classification model to differentiate between two classes of colony images.
+    Provide a keras sequential model design to inform the neural network architecture. The final binary/sigmoid layer
+    should not be included in the sequential model design, as this is added by the function.
 
     :param annotations_path: Path to directory containing annotated images, with subdirectories for each class (usually
         '0' and '1')
-    :param model_design: Keras model design (Sequential) to inform neural network architecture
+    :param model_design: Keras model design (Sequential) to inform neural network architecture, excluding final layer
     :param val_split: Validation split proportion
     :param image_width: Image width (pixels)
     :param image_height: Image height (pixels)
@@ -110,10 +112,11 @@ def train_softmax(annotations_path,
                   stop_training_threshold: float = 0.98) -> tuple[Sequential, list[str], keras.callbacks.History, list]:
     """
     Train a softmax classification model to differentiate between multiple classes (2 or more) of colony images.
+    The final softmax layer should not be included in the sequential model design, as this is added by the function.
 
     :param annotations_path: Path to directory containing annotated images, with subdirectories for each class
         (e.g., '0', '1', '2', ...)
-    :param model_design: Keras model design (Sequential) to inform neural network architecture
+    :param model_design: Keras model design (Sequential) to inform neural network architecture, excluding final layer
     :param val_split: Validation split proportion
     :param image_width: Image width (pixels)
     :param image_height: Image height (pixels)

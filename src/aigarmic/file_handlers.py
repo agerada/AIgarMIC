@@ -7,6 +7,8 @@
 """Functions to facilitate working with image data files"""
 
 import pathlib
+from pathlib import Path
+
 from aigarmic._img_utils import convert_cv2_to_keras
 import csv
 import os
@@ -54,7 +56,6 @@ def create_dataset_from_directory(directory: str,
         batch_size=batch_size, 
         label_mode=label_mode
     )
-    print(f"Found the following labels/classes: {train_dataset.class_names}")
     return train_dataset, val_dataset
 
 
@@ -134,3 +135,42 @@ def save_training_log(model_history: keras.callbacks.History,
             range(len(model_history.history['accuracy'])))
         writer.writerow(['accuracy', 'val_accuracy', 'loss', 'val_loss', 'epoch'])
         writer.writerows(h)
+
+
+def get_concentration_from_path(path: Union[str, Path]) -> float:
+    """
+    get concentration from plate image path, e.g.
+    antibiotic1/0.125.jpg -> 0.125
+
+    :param path: Path to plate image
+    :return: Concentration
+    """
+    split_text = os.path.split(path)
+    split_text = split_text[-1]
+    concentration_str = os.path.splitext(split_text)[0]
+    return float(concentration_str)
+
+
+def get_paths_from_directory(path: Union[str, Path]) -> dict[str, list[str]]:
+    """
+    Returns a dict of abx_names: [image1_path, image2_path, etc.]
+    If there are no antibiotic subdirectories, "unnamed" is used
+    for abx_names (length = 1)
+
+    :param path: Path to directory containing antibiotic subdirectories
+    :return: dict of abx_names: [image1_path, image2_path, etc.]
+    """
+    abx_names = [i for i in os.listdir(path) if not i.startswith('.') and os.path.isdir(os.path.join(path, i))]
+
+    if not abx_names:
+        abx_names = [""]
+
+    plate_images_paths = {}
+    for abx in abx_names:
+        _path = os.path.join(path, abx)
+        _temp_plate_images_paths = os.listdir(_path)
+        _temp_plate_images_paths = [i for i in _temp_plate_images_paths if i.count('.jpg') > 0 or i.count('.JPG') > 0]
+        _temp_plate_images_paths = [os.path.join(path, abx, i) for i in _temp_plate_images_paths]
+        plate_images_paths[abx] = _temp_plate_images_paths
+
+    return plate_images_paths

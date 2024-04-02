@@ -76,8 +76,6 @@ def split_by_grid(image: ndarray, n_rows: int = 8,
 
     if not grid_contours:
         raise ValueError("Unable to find contours threshold that returns correct number of colony images")
-    else:
-        print(f"Using {threshold_value} threshold value")
 
     # Sort contours, starting left to right
     (grid_contours, _) = contours.sort_contours(grid_contours, method="left-to-right")

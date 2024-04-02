@@ -45,11 +45,12 @@ Errors related to ``cv2`` and ``tensorflow`` import can be ignored.
 
     pytest
 
-3. Build documentation by running:
+3. Test and build documentation by running:
 
 .. code-block:: bash
 
     cd docs
+    make doctest
     make html
 
 4. Build the package by running:

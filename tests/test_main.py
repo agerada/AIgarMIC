@@ -1,5 +1,5 @@
 import subprocess
-from tests.conftest import FIRST_LINE_MODEL_PATH, MIC_PLATES_PATH, DRUG_NAME, PROJECT_ROOT
+from tests.conftest import FIRST_LINE_MODEL_PATH, MIC_PLATES_PATH, DRUG_NAME, PROJECT_ROOT, TARGET_MIC_CSV
 import csv
 import pytest
 from os import path
@@ -11,13 +11,22 @@ def test_main(tmp_path):
     d.mkdir()
 
     # test that the main function runs without error
+    # this just tests the running of the script, not model predictions, as that is tested
+    # in test_plate.py
     result = subprocess.run(["python", path.join(PROJECT_ROOT, "src", "aigarmic", "main.py"),
                              "-m", FIRST_LINE_MODEL_PATH,
                              "-t", "binary",
+                             "-n", "0,1",
                              "-o", d / "output.csv",
                              MIC_PLATES_PATH])
     assert result.returncode == 0
     assert (d / "output.csv").exists()
+
+    target = {}
+    with open(TARGET_MIC_CSV, "r", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            target[row["Position"]] = row["MIC"]
 
     with open(d / "output.csv", "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -28,3 +37,5 @@ def test_main(tmp_path):
             assert "Position" in row
             assert "QC" in row
             assert row["QC"] in ["P", "F", "W"]
+
+            #assert row["MIC"] == target[row["Position"]]

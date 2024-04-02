@@ -8,7 +8,8 @@
 from pathlib import Path
 from aigarmic.process_plate_image import split_by_grid
 from aigarmic.model import Model
-from aigarmic._img_utils import get_image_paths, get_concentration_from_path
+from aigarmic._img_utils import get_image_paths
+from aigarmic.file_handlers import get_concentration_from_path
 from typing import Optional, Union
 import cv2  # pylint: disable=import-error
 from random import randrange
@@ -61,7 +62,10 @@ class Plate:
             self.key = key
         else:
             if self.model is not None:
-                self.key = self.model.get_key()
+                try:
+                    self.key = self.model.get_key()
+                except LookupError:
+                    warn(f"No key found for linked model: {self.model}")
 
         if growth_code_matrix is not None:
             self.add_growth_code_matrix(growth_code_matrix)
@@ -171,9 +175,7 @@ class Plate:
                 i, j = index
                 image = self.image_matrix[i][j]
             except KeyError as e:
-                print(f"Invalid index provided to get_colony_image: {index}")
-                print(e)
-                raise e
+                raise KeyError(f"Invalid index provided to get_colony_image: {index}") from e
         code = self.drug + "_" + str(self.concentration) + "_i_" + str(i) + "_j_" + str(j)
         return image, code
 
@@ -183,7 +185,6 @@ class Plate:
 
         :param model: Model to link
         """
-        print(f"linking model to plate {self.concentration}")
         self.model = model
         self.model_image_x = model.trained_x
         self.model_image_y = model.trained_y
@@ -222,8 +223,7 @@ class Plate:
         :param model: linked model to use for predictions
         :return: Two-dimensional list of growth annotations
         """
-        print(f"annotating plate images - {self.concentration}")
-        if not self.image_matrix: 
+        if not self.image_matrix:
             raise LookupError(
                 """
                 Unable to find an image_matrix associated with this plate. 
@@ -250,11 +250,20 @@ class Plate:
         for row in self.image_matrix: 
             for image in row: 
                 prediction_data = model.predict(image)
-                temp_predictions_row.append(prediction_data['prediction'])
-                temp_score_row.append(prediction_data['score'])
+                if 'growth_code' not in prediction_data:
+                    raise ValueError("Model predictions dict must contain 'growth_code'")
+                temp_predictions_row.append(prediction_data.get('prediction', None))
+                temp_score_row.append(prediction_data.get('score', None))
                 temp_growth_code_rows.append(prediction_data['growth_code'])
-                temp_growth_rows.append(prediction_data['growth'])
-                temp_accuracy_row.append(prediction_data['accuracy'])
+                _growth = None
+                if 'growth' not in prediction_data:
+                    try:
+                        key = model.get_key()
+                        _growth = key[prediction_data['growth_code']]
+                    except LookupError:
+                        pass
+                temp_growth_rows.append(_growth)
+                temp_accuracy_row.append(prediction_data.get('accuracy', 1.))
             self.predictions_matrix.append(temp_predictions_row)
             self.score_matrix.append(temp_score_row)
             self.growth_matrix.append(temp_growth_rows)
@@ -434,13 +443,17 @@ class PlateSet:
 
         if key is not None:
             self.key = key
-        _list_of_keys = [i.get_key() for i in plates_list]
-        if not all(i == _list_of_keys[0] for i in _list_of_keys):
-            raise ValueError("Plates supplied to PlateSet have different growth keys")
-        if not _list_of_keys:
-            raise ValueError("Plates supplied to PlateSet do not have associated key")
-        if key is None:
-            self.key = _list_of_keys[0]
+        else:
+            _list_of_keys = []
+            try:
+                _list_of_keys = [i.get_key() for i in plates_list]
+                self.key = _list_of_keys[0]
+            except LookupError:
+                warn(f"No key provided to PlateSet")
+            if not all(i == _list_of_keys[0] for i in _list_of_keys):
+                raise ValueError("Plates supplied to PlateSet have different growth keys")
+            if not _list_of_keys:
+                self.key = None
 
         drug_names = [i.drug for i in plates_list]
         if len(set(drug_names)) > 1:
@@ -476,7 +489,6 @@ class PlateSet:
             try:
                 matrices_shapes.append(i.matrix_dimensions(i.growth_code_matrix))
             except ValueError as e:
-                print(e)
                 raise ValueError(f"Plate {i} does not a matrix-shaped growth code matrix") from e
 
         return True if all(i == matrices_shapes[0] for i in matrices_shapes) else False
@@ -515,7 +527,7 @@ class PlateSet:
                         output[i][j] = mic
         return output
 
-    def calculate_mic(self, no_growth_key_items: tuple[int, ...] = (0, 1)) -> np.array:
+    def calculate_mic(self, no_growth_key_items: tuple[int, ...]) -> np.array:
         """
         Calculate MIC matrix using image predictions.
         Sets self.mic_matrix
@@ -565,8 +577,7 @@ class PlateSet:
         qc_matrix = np.full(self.mic_matrix.shape, fill_value="", dtype=str)
 
         if self.positive_control_plate is None:
-            print(f"*Warning* - {repr(self)} does not contain a positive control plate.")
-            print("QC not valid.")
+            warn(f"*Warning* - {repr(self)} does not contain a positive control plate.")
         else:
             for i, row in enumerate(self.positive_control_plate.growth_code_matrix):
                 for j, item in enumerate(row):
@@ -596,7 +607,7 @@ class PlateSet:
                     if flips > 1:
                         qc_matrix[i][j] = "W"
         else:
-            print(f"*Warning* - {repr(self)} has insufficient plates for full QC")
+            warn(f"*Warning* - {repr(self)} has insufficient plates for full QC")
         self.qc_matrix = qc_matrix
         return qc_matrix
 

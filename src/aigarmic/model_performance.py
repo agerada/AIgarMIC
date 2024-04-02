@@ -8,7 +8,7 @@
 
 """Test the performance of a saved model on a set of colony images. Use model_performance.py -h for help."""
 
-from aigarmic._img_utils import get_paths_from_directory
+from aigarmic.file_handlers import get_paths_from_directory
 from aigarmic.model import BinaryModel
 import cv2  # pylint: disable=import-error
 import argparse

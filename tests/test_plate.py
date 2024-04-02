@@ -1,6 +1,11 @@
 from aigarmic.plate import Plate, PlateSet, plate_set_from_dir
-from tests.conftest import (DRUG_NAME, MIN_CONCENTRATION, MAX_CONCENTRATION, TARGET_MIC_CSV, MIC_PLATES_PATH,
-                            basic_plates)
+from tests.conftest import (DRUG_NAME,
+                            MIN_CONCENTRATION,
+                            MAX_CONCENTRATION,
+                            TARGET_MIC_CSV,
+                            MIC_PLATES_PATH,
+                            basic_plates,
+                            target_mic_spectrum)
 from os import path
 import numpy as np
 import csv
@@ -30,27 +35,21 @@ def test_annotate_images(plates_list, binary_nested_model_from_file):
 
 
 @pytest.mark.assets_required
-def test_plate_set(binary_nested_model_from_file):
+def test_plate_set(binary_nested_model_from_file, target_mic_spectrum):
     plate_set = plate_set_from_dir(path=path.join(MIC_PLATES_PATH, DRUG_NAME),
                                    drug=DRUG_NAME,
                                    model=binary_nested_model_from_file)
     assert isinstance(plate_set, PlateSet)
 
-    plate_set.calculate_mic()
+    plate_set.calculate_mic(no_growth_key_items=tuple([0, 1]))
     plate_set.generate_qc()
-
-    with open(TARGET_MIC_CSV, "r", encoding='utf-8-sig') as f:
-        target_mic_values = []
-        reader = csv.DictReader(f)
-        for line in reader:
-            target_mic_values.append(line)
 
     # end-to-end validation, starting with images of multiple antibiotic concentrations, and ending with a
     # MIC and QC values. Compare to results that were reported in Gerada et al. 2024 Microbiology Spectrum paper.
     predicted_data = plate_set.get_csv_data()
     predicted_data = [{k: v for k, v in i.items() if k != "QC"} for i in predicted_data]
-    for target, prediction in zip(target_mic_values, predicted_data):
-        assert target == prediction
+    for prediction in predicted_data:
+        assert prediction["MIC"] == target_mic_spectrum[prediction["Position"]]
 
 
 def test_convert_growth_codes(basic_plates):
@@ -88,7 +87,7 @@ def test_calculate_mic(basic_plates):
         i.set_key(_key)
         i.convert_growth_codes(key=_key)
     basic_plate_set = PlateSet(basic_plates)
-    basic_plate_set.calculate_mic()
+    basic_plate_set.calculate_mic(no_growth_key_items=tuple([0, 1]))
     basic_plate_set.generate_qc()
 
     target_mic = [["64.0", ">128.0"],
