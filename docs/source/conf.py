@@ -9,7 +9,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src', 'aigarmic')))
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 
 project = 'AIgarMIC'
 copyright = '2024, Alessandro Gerada'
