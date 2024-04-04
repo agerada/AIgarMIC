@@ -19,10 +19,10 @@ authors:
   - name: Alex Howard
     email: Alexander.Howard@liverpool.ac.uk
     orcid: 0000-0002-4195-6821
-    affiliations: "1, 2"
+    affiliation: "1, 2"
   - name: William Hope
     email: hopew@liverpool.ac.uk
-    affiliations: "1, 2"
+    affiliation: "1, 2"
     orcid: 0000-0001-6187-878X
 affiliations:
   - name: Antimicrobial Pharmacodynamics and Therapeutics Group, Department of Pharmacology and Therapeutics, Institute of Systems, Molecular & Integrative Biology, University of Liverpool, UK
