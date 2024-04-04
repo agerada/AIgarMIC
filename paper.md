@@ -22,6 +22,8 @@ authors:
     affiliations: "1, 2"
   - name: William Hope
     email: hopew@liverpool.ac.uk
+    affiliations: "1, 2"
+    orcid: 0000-0001-6187-878X
 affiliations:
   - name: Antimicrobial Pharmacodynamics and Therapeutics Group, Department of Pharmacology and Therapeutics, Institute of Systems, Molecular & Integrative Biology, University of Liverpool, UK
     index: 1
