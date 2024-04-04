@@ -13,6 +13,15 @@ authors:
     email: alessandro.gerada@liverpool.ac.uk
     orcid: 0000-0002-6743-4271
     affiliation: "1, 2"
+  - name: Nicholas Harper
+    email: nharper@liverpool.ac.uk
+    affiliation: "1"
+  - name: Alex Howard
+    email: Alexander.Howard@liverpool.ac.uk
+    orcid: 0000-0002-4195-6821
+    affiliations: "1, 2"
+  - name: William Hope
+    email: hopew@liverpool.ac.uk
 affiliations:
   - name: Antimicrobial Pharmacodynamics and Therapeutics Group, Department of Pharmacology and Therapeutics, Institute of Systems, Molecular & Integrative Biology, University of Liverpool, UK
     index: 1
