@@ -20,7 +20,7 @@ import warnings
 
 
 def train_modular_parser():
-    parser = argparse.ArgumentParser("""
+    parser = argparse.ArgumentParser(description="""
         This script loads images from annotations directory and trains ML to classify colony growth.
         """)
     parser.add_argument("annotations", type=str,

@@ -13,11 +13,11 @@ from aigarmic._img_utils import get_image_paths, Deleter, in_list
 
 
 def clean_up_annotations_parser():
-    parser = argparse.ArgumentParser("""
+    parser = argparse.ArgumentParser(description="""
         Clean up duplicate images in annotation folders
         """)
     parser.add_argument('input_dir', type=str,
-                        help="Input directory - can contain subdirectory of images which will be processed separately")
+                        help="Input directory - can contain subdirectories of images which will be processed separately")
     parser.add_argument('-q', '--quiet', action='store_true',
                         help="Suppress file deletion warnings (CAUTION)")
     return parser
