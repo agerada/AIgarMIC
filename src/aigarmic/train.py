@@ -72,7 +72,7 @@ def train_binary(annotations_path,
     full_dataset_unbatched = tuple(full_dataset.unbatch())
     labels = [0, 0]
     for (_, label) in full_dataset_unbatched:
-        labels[int(label.numpy())] += 1
+        labels[int(label.numpy()[0])] += 1
     neg = labels[0]
     pos = labels[1]
     initial_bias = np.log([pos / neg])
