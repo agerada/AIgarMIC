@@ -38,3 +38,8 @@ sphinx-rtd-theme = ">=2.0.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+markers = [
+    "assets_required: requires optional assets in project root (skip with '-m \"not assets_required\"'"
+]

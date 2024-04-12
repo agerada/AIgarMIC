@@ -7,10 +7,7 @@
 
 """
 This script shows random images from 96-well plates, and waits for user input to 
-annotate the image. Use the following key: 
-0 = no growth
-1 = faint growth or colony
-2 = normal growth
+annotate the image. Supports up to 10 growth labels (0 to 9).
 The output is stored in annotations/
 """
 
@@ -24,7 +21,9 @@ from datetime import datetime
 
 
 def manual_annotator_parser():
-    parser = argparse.ArgumentParser(description="Manually annotate plate images")
+    parser = argparse.ArgumentParser(description="""
+        Manually label random colony images from plates to generate annotated image database.
+        Supports labels from 0 to 9. """)
     parser.add_argument('input_directory', type=str,
                         help="Directory containing plate images")
     parser.add_argument('-o', '--output_directory', type=str, default='annotations/',
@@ -55,10 +54,7 @@ def main():
                 print(f"Error while trying to import {path}: ")
                 print(e)
 
-    print("Use the following key for input: ")
-    print("0 = no growth")
-    print("1 = faint growth or colony")
-    print("2 = normal growth")
+    print("Enter a number from 0 to 9 corresponding to growth quality")
     print("Press esc to cancel at any time. ")
     print()
 
