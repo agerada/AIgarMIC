@@ -1,6 +1,14 @@
 Installation
 ============
 
+System requirements
+-------------------
+
+``AIgarMIC`` has been developed on macOS Sonoma. It has been tested on linux (Ubuntu) and Windows 11. ARM versions of Windows are unsupported due to ``tensorflow`` incompatibility.
+
+Environment setup
+-----------------
+
 We highly recommend using an environment manager to use ``AIgarMIC``, such as ``virtualenv`` (https://virtualenv.pypa.io/en/stable/) or ``conda`` (https://docs.conda.io/en/latest/). ``AIgarMIC`` was built using Python 3.9, so we recommend using this version of Python.
 
 For example, using conda:
