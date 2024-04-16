@@ -3,6 +3,10 @@ Developer notes
 
 The following is a list of notes for developers who want to contribute to ``AIgarMIC``. ``AIgarMIC`` is written in Python 3.9 and uses ``tensorflow`` and ``keras 2`` for modelling. Models have been tested only on ``keras 2`` therefore the project's dependencies require ``tensorflow < 2.16`` to maintain this compatibility.
 
+Contributing
+------------
+
+We welcome contributions to ``AIgarMIC``. Please follow our [contributing guidelines](https://github.com/agerada/AIgarMIC/blob/paper/CONTRIBUTING.md).
 
 Installation
 ------------
