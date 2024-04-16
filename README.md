@@ -64,6 +64,10 @@ To cite the validation data and developmental approach described in the `AIgarMI
 The manuscript describing the validation of `AIgarMIC` can be found at: https://doi.org/10.1128/spectrum.04209-23.
 Optional asset data is available at: https://10.17638/datacat.liverpool.ac.uk/2631.
 
+## Contributing
+
+We welcome contributions to ``AIgarMIC``. Please follow our [contributing guidelines](https://github.com/agerada/AIgarMIC/blob/paper/CONTRIBUTING.md).
+
 ## License
 
 `AIgarMIC` is provided under the GNU General Public License v3.0. For more information, see the LICENSE file.

@@ -26,9 +26,9 @@ authors:
     affiliation: "1, 2"
     orcid: 0000-0001-6187-878X
 affiliations:
-  - name: Antimicrobial Pharmacodynamics and Therapeutics Group, Department of Pharmacology and Therapeutics, Institute of Systems, Molecular & Integrative Biology, University of Liverpool, UK
+  - name: Antimicrobial Pharmacodynamics and Therapeutics Group, Department of Pharmacology and Therapeutics, Institute of Systems, Molecular & Integrative Biology, University of Liverpool, United Kingdom
     index: 1
-  - name: Department of Infection and Immunity, Liverpool Clinical Laboratories, Liverpool University Hospitals NHS Foundation Trust, Liverpool, UK
+  - name: Department of Infection and Immunity, Liverpool Clinical Laboratories, Liverpool University Hospitals NHS Foundation Trust, Liverpool, United Kingdom
     index: 2
 date: 02 April 2024
 bibliography: paper.bib
