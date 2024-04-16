@@ -42,7 +42,7 @@ Before you ask a question, it is best to search for existing [Issues](https://gi
 
 If you then still feel the need to ask a question and need clarification, we recommend the following:
 
-- Open an [Issue](https://github.com/agerada/AIgarMIC/issues/new).
+- Start a topic in the [Discussions](https://github.com/agerada/AIgarMIC/discussions) section (alternatively, email the lead developer at <alessandro.gerada@liverpool.ac.uk>).
 - Provide as much context as you can about what you're running into.
 - Provide project and platform versions (especially `tensorflow` and `keras` versions), depending on what seems relevant.
 
@@ -125,6 +125,22 @@ include Setup of env, IDE and typical getting started instructions?
 
 -->
 
+[Installation](https://aigarmic.readthedocs.io/en/latest/installation.html) instructions and [developer notes](https://aigarmic.readthedocs.io/en/latest/developer.html) for `AIgarMIC` can be found in the documentation. We suggest using [PyCharm](https://www.jetbrains.com/pycharm/) as the IDE for development, although this is optional. For development purposes, we recommend:
+
+- Use of a virtual environment
+- Installation of optional asset files (https://aigarmic.readthedocs.io/en/latest/installation.html#assets-installation)
+
+Contribute to `AIgarMIC` by following these general steps:
+
+1. Fork the project locally,
+2. Create a new branch that will contain your feature/bug fix,
+3. Make your updates,
+4. If the branch contains new feature/s functionality, add testing code to the `tests` directory (we use `pytest` as the testing framework),
+5. Ensure that the full testing suite passes (including ones requiring optional assets) -- see [developer notes]((https://aigarmic.readthedocs.io/en/latest/developer.html)) for more information on testing,
+6. Check that build process succeeds (we use `poetry` for dependency management and building), again see [developer notes](https://aigarmic.readthedocs.io/en/latest/developer.html) for more information,
+7. Update documentation (if appropriate) and check that `doctest` passes,
+8. Commit your changes and push to your fork,
+9. Create a pull request to the `main` branch of the `AIgarMIC` repository.
 
 
 ### Improving The Documentation
@@ -133,14 +149,24 @@ Updating, improving and correcting the documentation
 
 -->
 
+For documentation, we use `reStructuredText`. Source files are stored in the `docs` directory. The documentation is built using `sphinx`. Documentation source code can be updated using the same contribution process as for code. Please try to keep the documentation free of excessive laboratory jargon, and provide examples using the optional assets wherever possible.
+
 ## Styleguides
-### Commit Messages
-<!-- TODO
 
--->
+`AIgarMIC` follows the [PEP 8](https://pep8.org/) style guide, although convention and refactor recommendations are not enforced. Please see developer notes for more information on checking `PEP 8` compliance.
 
-## Join The Project Team
-<!-- TODO -->
+In addition, these are some specific style guides for `AIgarMIC`:
+
+- User-accessible or API-level classes and functions/methods should have a `sphinx` compliant `reStructuredText` docstring.
+- Comments should be used sparingly
+- Maximum line length is 120 characters
+- Use of type hints in functions/methods
+- Import and no-member errors related to `tensorflow`, `keras` and `openCV` are known and can be ignored inline using: `# pylint: disable=import-error,no-member`
+
+
+## Join The Project Team and Collaborations
+
+If you are interested in joining the team or a formal collaboration, please email the lead developer, Alessandro Gerada at: <alessandro.gerada@liverpool.ac.uk>.
 
 <!-- omit in toc -->
 ## Attribution
