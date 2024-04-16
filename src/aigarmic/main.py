@@ -60,10 +60,10 @@ def main():
     plate_images_paths = get_paths_from_directory(args.directory)
 
     if args.check_contours:
-        cv2.startWindowThread()
+        cv2.startWindowThread()  # pylint: disable=no-member
         for abx, paths in plate_images_paths.items():
             for path in paths:
-                _image = cv2.imread(path)
+                _image = cv2.imread(path)  # pylint: disable=no-member
                 try:
                     split_by_grid(_image,
                                   visualise_contours=True,
@@ -73,9 +73,9 @@ def main():
 
         pos_replies = ['y', 'yes', 'ye']
         neg_replies = ['n', 'no']
-        cv2.waitKey(1)
-        cv2.destroyAllWindows()
-        cv2.waitKey(1)
+        cv2.waitKey(1)  # pylint: disable=no-member
+        cv2.destroyAllWindows()  # pylint: disable=no-member
+        cv2.waitKey(1)  # pylint: disable=no-member
         while True:
             input_key = input("""Completed contour checks. Would you like to continue with annotation? [Y / N]
                               Please only proceed if all images have correctly identified 96 boxes!

@@ -34,7 +34,7 @@ def main():
     _images_list = []
     if isinstance(images_paths, list):
         for i in images_paths: 
-            _image = cv2.imread(i)
+            _image = cv2.imread(i)  # pylint: disable=no-member
             if not in_list(_image, _images_list): 
                 _images_list.append(_image)
             else: 
@@ -44,7 +44,7 @@ def main():
         for _, v in images_paths.items():
             _images_list = []
             for i in v: 
-                _image = cv2.imread(i)
+                _image = cv2.imread(i)  # pylint: disable=no-member
                 if not in_list(_image, _images_list): 
                     _images_list.append(_image)
                 else: 

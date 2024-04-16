@@ -74,10 +74,10 @@ def main():
     for i in range(n): 
         x, code = choice(plates).get_colony_image()
         code = code + '_' + datetime.now().strftime('%Y-%m-%d_%H%M%S')
-        cv2.imshow('image', x)
+        cv2.imshow('image', x)  # pylint: disable=no-member
         print("Please enter classification for this image..")
         while True: 
-            input_key = cv2.waitKey()
+            input_key = cv2.waitKey()  # pylint: disable=no-member
             if input_key not in codes: 
                 print("Input not recognised, please try again..")
                 continue
@@ -101,7 +101,7 @@ def main():
             os.mkdir(os.path.join(output_dir, str(a)))
     
     for i, a, c in zip(output_images, output_annotations, output_image_codes):
-        cv2.imwrite(os.path.join(output_dir, str(a), c + '.jpg'), i)
+        cv2.imwrite(os.path.join(output_dir, str(a), c + '.jpg'), i)  # pylint: disable=no-member
 
 
 if __name__ == "__main__": 

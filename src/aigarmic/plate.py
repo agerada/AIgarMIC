@@ -81,7 +81,7 @@ class Plate:
         self.model_image_y = None
         
         if self.image_path: 
-            self.image = cv2.imread(self.image_path)
+            self.image = cv2.imread(self.image_path)  # pylint: disable=no-member
             self.image_matrix = split_by_grid(self.image, self.n_row, visualise_contours=visualise_contours,
                                               plate_name=self.drug + '_' + str(self.concentration))
 
@@ -335,10 +335,10 @@ class Plate:
             print()
             print(f"This image ({self.drug + str(self.concentration)} position {i} {j}) was labelled as {growth} "
                   f"with an accuracy of {accuracy * 100:.2f}")
-            cv2.imshow(self.drug + str(self.concentration) + f" position {i} {j}", image)
+            cv2.imshow(self.drug + str(self.concentration) + f" position {i} {j}", image)  # pylint: disable=no-member
             print("Press enter to continue, or enter new classification: ")
             while True: 
-                input_key = cv2.waitKey()
+                input_key = cv2.waitKey()  # pylint: disable=no-member
                 if input_key not in codes:
                     print("Input not recognised, please try again..")
                     continue
@@ -380,7 +380,7 @@ class Plate:
                     os.mkdir(class_dir)
                 save_path = os.path.join(class_dir, stamp + ".jpg")
                 print(f"Saving image to: {save_path}")
-                cv2.imwrite(save_path, image)
+                cv2.imwrite(save_path, image)  # pylint: disable=no-member
         return changed_log
 
     def convert_growth_codes(self, key: list[str]) -> list[list[str]]:
@@ -449,7 +449,7 @@ class PlateSet:
                 _list_of_keys = [i.get_key() for i in plates_list]
                 self.key = _list_of_keys[0]
             except LookupError:
-                warn(f"No key provided to PlateSet")
+                warn("No key provided to PlateSet")
             if not all(i == _list_of_keys[0] for i in _list_of_keys):
                 raise ValueError("Plates supplied to PlateSet have different growth keys")
             if not _list_of_keys:

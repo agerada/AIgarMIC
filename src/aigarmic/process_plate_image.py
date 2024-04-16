@@ -29,19 +29,19 @@ def find_threshold_value(image: ndarray, start: int = 20,
     :return: tuple of contours and threshold value
     """
     for i in range(start, end, by):
-        ret, thresh = cv2.threshold(image, i, 255, cv2.THRESH_BINARY_INV)
+        _, thresh = cv2.threshold(image, i, 255, cv2.THRESH_BINARY_INV)  # pylint: disable=no-member
 
         # Find contours and filter using area
-        _contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        _contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # pylint: disable=no-member
         _contours = _contours[0] if len(_contours) == 2 else _contours[1]
         grid_contours = []
         for c in _contours:
-            area = cv2.contourArea(c)
+            area = cv2.contourArea(c)  # pylint: disable=no-member
             if area > area_lower_bound:
                 grid_contours.append(c)
 
         # sort contours and remove biggest (outer) grid square
-        grid_contours = sorted(grid_contours, key=cv2.contourArea)
+        grid_contours = sorted(grid_contours, key=cv2.contourArea)  # pylint: disable=no-member
         grid_contours = grid_contours[:-1]
 
         # If we find the target boxes, return contours and threshold
@@ -64,15 +64,15 @@ def split_by_grid(image: ndarray, n_rows: int = 8,
     """
     if visualise_contours and not plate_name:
         raise ValueError("Pass plate name to split_by_grid if using visualise_contours")
-    blur = cv2.GaussianBlur(image, (25, 25), 0)
-    gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
-    grid_contours, threshold_value = find_threshold_value(gray)
+    blur = cv2.GaussianBlur(image, (25, 25), 0)  # pylint: disable=no-member
+    gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)  # pylint: disable=no-member
+    grid_contours, _ = find_threshold_value(gray)
 
     if visualise_contours:
         _image = image
-        cv2.drawContours(_image, grid_contours, -1, (0, 255, 0), 10)
-        cv2.imshow(plate_name, _image)
-        cv2.waitKey()
+        cv2.drawContours(_image, grid_contours, -1, (0, 255, 0), 10)  # pylint: disable=no-member
+        cv2.imshow(plate_name, _image)  # pylint: disable=no-member
+        cv2.waitKey()  # pylint: disable=no-member
 
     if not grid_contours:
         raise ValueError("Unable to find contours threshold that returns correct number of colony images")
@@ -95,7 +95,7 @@ def split_by_grid(image: ndarray, n_rows: int = 8,
     # Iterate through each box
     for j, col in enumerate(sorted_grid):
         for i, c in enumerate(col):
-            x, y, w, h = cv2.boundingRect(c)
+            x, y, w, h = cv2.boundingRect(c)  # pylint: disable=no-member
             cropped_image = image[y:y + h, x:x + w]
             out_matrix[i][j] = cropped_image
 

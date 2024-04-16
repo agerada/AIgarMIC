@@ -40,7 +40,7 @@ def main():
     results = []
     for i, paths in images.items():
         for path in paths:
-            image = cv2.imread(path)
+            image = cv2.imread(path)  # pylint: disable=no-member
             p = model.predict(image)
             p['true_class'] = int(i)
             results.append(p)
