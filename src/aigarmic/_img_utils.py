@@ -25,9 +25,9 @@ def convert_cv2_to_keras(image, size_x=160, size_y=160) -> np.ndarray:
     :return: Image as a numpy array
     """
     # resize
-    image = cv2.resize(image, (size_x, size_y))
+    image = cv2.resize(image, (size_x, size_y))  # pylint: disable=no-member
     # convert from BGR to RGB
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # pylint: disable=no-member
     image = image.reshape(1, size_x, size_y, 3)
     image = image.astype(np.float32)
     return image
@@ -41,7 +41,7 @@ def keras_image_to_cv2(image: tf.Tensor) -> np.ndarray:
     :return: Image as a numpy array
     """
     img = image.numpy().astype(np.uint8)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # pylint: disable=no-member
     return img
 
 

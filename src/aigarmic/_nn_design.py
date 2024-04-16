@@ -6,8 +6,8 @@
 
 """Template NN designs as reported in Gerada et al. 2024 Microbiology Spectrum paper"""
 
-from tensorflow.keras import layers
-from tensorflow.keras.models import Sequential
+from tensorflow.keras import layers  # pylint: disable=import-error,no-name-in-module
+from tensorflow.keras.models import Sequential  # pylint: disable=import-error,no-name-in-module
 
 
 def model_design_spectrum_2024_binary_first_step(image_width: int,

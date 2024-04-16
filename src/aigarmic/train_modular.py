@@ -107,8 +107,8 @@ def main():
                         f"This image was misclassified as {i['predicted_class']} "
                         f"with prediction of {i['prediction']} "
                         f"(should have been {i['true_class']})")
-                    cv2.imshow(str(i['path']), i['image'])
-                    cv2.waitKey()
+                    cv2.imshow(str(i['path']), i['image'])  # pylint: disable=no-member
+                    cv2.waitKey()  # pylint: disable=no-member
                 else:
                     print(f"Correct classification with prediction {i['prediction']} (class {i['true_class']})")
 

@@ -38,6 +38,27 @@ https://aigarmic.readthedocs.io/en/latest/introduction.html#typical-workflows
 The lead developer of ``AIgarMIC`` is Alessandro Gerada (https://github.com/agerada/ and https://agerada.github.io/), 
 University of Liverpool, UK (alessandro.gerada@liverpool.ac.uk).
 
+## Cite
+
+If you are using `AIgarMIC` in your research project, please cite [TO FOLLOW].
+
+To cite the validation data and developmental approach described in the `AIgarMIC` validation manuscript, please cite:
+
+    @article{geradaDeterminationMinimumInhibitory2024,
+      title = {Determination of Minimum Inhibitory Concentrations Using Machine-Learning-Assisted Agar Dilution},
+      author = {Gerada, Alessandro and Harper, Nicholas and Howard, Alex and Reza, Nada and Hope, William},
+      editor = {Shier, Kileen L.},
+      date = {2024-03-22},
+      journaltitle = {Microbiology Spectrum},
+      shortjournal = {Microbiol Spectr},
+      pages = {e04209-23},
+      issn = {2165-0497},
+      doi = {10.1128/spectrum.04209-23},
+      url = {https://journals.asm.org/doi/10.1128/spectrum.04209-23},
+      urldate = {2024-04-02},
+      langid = {english}
+    }
+
 ## External links
 
 The manuscript describing the validation of `AIgarMIC` can be found at: https://doi.org/10.1128/spectrum.04209-23.

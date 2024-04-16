@@ -43,3 +43,6 @@ build-backend = "poetry.core.masonry.api"
 markers = [
     "assets_required: requires optional assets in project root (skip with '-m \"not assets_required\"'"
 ]
+
+[tool.pylint]
+ignored-modules = ["cv2.errors"]

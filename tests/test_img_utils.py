@@ -2,7 +2,7 @@ import shutil
 from tests.conftest import COLONY_IMAGE_PATH, NO_COLONY_IMAGE_PATH
 from aigarmic._img_utils import Deleter, is_similar, in_list
 from os import path
-import cv2
+import cv2  # pylint: disable=import-error
 
 
 def test_delete_file(tmp_path):

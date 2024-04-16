@@ -38,7 +38,7 @@ def create_dataset_from_directory(directory: str,
     :param batch_size: Batch size for datasets
     :return: Tuple containing training and validation datasets
     """
-    train_dataset = tf.keras.utils.image_dataset_from_directory(
+    train_dataset = tf.keras.utils.image_dataset_from_directory(  # pylint: disable=no-member
                 directory,
                 validation_split=val_split, 
                 subset='training',
@@ -47,7 +47,7 @@ def create_dataset_from_directory(directory: str,
                 batch_size=batch_size, 
                 label_mode=label_mode
             )
-    val_dataset = tf.keras.utils.image_dataset_from_directory(
+    val_dataset = tf.keras.utils.image_dataset_from_directory(  # pylint: disable=no-member
         directory,
         validation_split=val_split, 
         subset='validation', 
@@ -60,7 +60,7 @@ def create_dataset_from_directory(directory: str,
 
 
 def predict_colony_images_from_directory(directory: Optional[Union[str, pathlib.Path]],
-                                         model: tf.keras.models.Model,
+                                         model: tf.keras.models.Model,  # pylint: disable=no-member
                                          class_names: list[str],
                                          image_width: int,
                                          image_height: int,
@@ -88,7 +88,7 @@ def predict_colony_images_from_directory(directory: Optional[Union[str, pathlib.
 
     for i in file_paths:
         for j in file_paths[i]:
-            image = cv2.imread(j)
+            image = cv2.imread(j)  # pylint: disable=no-member
             true_class = i
             directory = j
             prediction = model.predict(convert_cv2_to_keras(image, image_width, image_height))

@@ -52,7 +52,7 @@ class KerasModel(Model):
         :param key: key to interpret model output
         """
         self.path = path
-        self.keras_data = tf.keras.models.load_model(path)
+        self.keras_data = tf.keras.models.load_model(path)  # pylint: disable=no-member
         if key:
             self.key = key
         else:
@@ -70,7 +70,7 @@ class KerasModel(Model):
 
         :param path: path to saved model
         """
-        self.keras_data = tf.keras.models.load_model(path)
+        self.keras_data = tf.keras.models.load_model(path)  # pylint: disable=no-member
 
     def predict(self, image: np.ndarray) -> dict:
         raise NotImplementedError

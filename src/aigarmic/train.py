@@ -10,13 +10,13 @@ Functions and classes that allow for training neural network models for colony i
 
 from aigarmic.file_handlers import create_dataset_from_directory
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras import layers
-from tensorflow.keras.utils import image_dataset_from_directory
-from tensorflow.keras.initializers import Constant
+from tensorflow.keras.models import Sequential  # pylint: disable=import-error, no-name-in-module
+from tensorflow.keras import layers  # pylint: disable=import-error, no-name-in-module
+from tensorflow.keras.utils import image_dataset_from_directory  # pylint: disable=import-error, no-name-in-module
+from tensorflow.keras.initializers import Constant  # pylint: disable=import-error, no-name-in-module
 import keras.callbacks
 from sklearn.utils import class_weight
-from tensorflow.keras import initializers
+from tensorflow.keras import initializers  # pylint: disable=import-error, no-name-in-module
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
@@ -85,7 +85,8 @@ def train_binary(annotations_path,
     model_design.add(layers.Dense(1, activation='sigmoid',
                                   bias_initializer=initial_bias))
     with tf.device('/device:GPU:0'):
-        model_design.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate),
+        lr = learning_rate
+        model_design.compile(optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=lr),  # pylint: disable=no-member
                              loss='binary_crossentropy',
                              metrics=['accuracy'])
 
@@ -201,7 +202,7 @@ def visualise_training(history: keras.callbacks.History) -> None:
     plt.show()
 
 
-class ValidationThresholdCallback(tf.keras.callbacks.Callback):
+class ValidationThresholdCallback(tf.keras.callbacks.Callback):  # pylint: disable=no-member
     def __init__(self, threshold):
         """
         Stop training if validation accuracy is above threshold
@@ -211,7 +212,7 @@ class ValidationThresholdCallback(tf.keras.callbacks.Callback):
         super().__init__()
         self.threshold = threshold
 
-    def on_epoch_end(self, epoch, logs=None) -> None:
+    def on_epoch_end(self, epoch, logs=None) -> None:  # pylint: disable=unused-argument
         """
         Determines whether to stop training based on validation accuracy
         """
