@@ -71,6 +71,7 @@ If developing using macOS, change the following line:
 to:
 
 ``tensorflow==2.15.0; sys_platform != 'darwin' or platform_machine != 'arm64'``
+
 ``tensorflow-macos==2.15.0; sys_platform == 'darwin' and platform_machine == 'arm64'``
 
 This allows platform-agnostic use.
