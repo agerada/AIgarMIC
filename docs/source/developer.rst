@@ -57,12 +57,12 @@ Errors related to ``cv2`` and ``tensorflow`` import can be ignored.
     make doctest
     make html
 
-4. Update dependencies in ``requirements.txt`` by running:
+4. Update dependencies in ``requirements.txt`` by running (suggest use ``pip-chill`` rather than ``pip freeze`` to avoid clashes in dependencies):
 
 .. code-block:: bash
 
-    pip freeze > requirements.txt
-    pip freeze > docs/source/requirements.txt
+    pip-chill > requirements.txt
+    pip-chill > docs/source/requirements.txt
 
 If developing using macOS, change the following line:
 
