@@ -44,3 +44,25 @@ Alternative approaches
 ----------------------
 
 Alternatively, to train a keras convolutional neural network please see :ref:`train_modular` (allows training of binary or softmax model from annotate colony images using a fixed CNN structure described in http://dx.doi.org/10.1128/spectrum.04209-23), :func:`aigarmic.train_binary` and :func:`aigarmic.train_softmax`. A custom keras Sequential CNN can be defined for the latter two functions, but the training process is simplified, if a binary or softmax model is sufficient.
+
+Using custom image splitters
+----------------------------
+
+A key step in calculating MICs using ``AIgarMIC`` is the splitting of agar plate images into small images covering an inoculation position. By default, ``AIgarMIC`` uses a grid-based splitting algorithm, and applies this by default on initialisation of a :class:`aigarmic.Plate` object. Users may prefer to implement their own splitting function, or input small images directly. To demonstrate how this could be implemented, we will explicitly call the splitting function on a :class:`aigarmic.Plate` object:
+
+>>> from aigarmic.process_plate_image import split_by_grid
+>>> import cv2
+>>> plates = [Plate(antibiotic, get_concentration_from_path(path), model=model, n_row=8, n_col=12) for path in paths[antibiotic]]
+>>> for plate, path in zip(plates, paths[antibiotic]):
+...     image = cv2.imread(path)
+...     plate.image_matrix = split_by_grid(image, n_rows=8)
+>>> for i in plates:
+...     _ = i.annotate_images()
+>>> plate_set = PlateSet(plates_list=plates)
+>>> _ = plate_set.calculate_mic(no_growth_key_items=tuple([0]))
+>>> plate_set.convert_mic_matrix(mic_format='string').tolist()[0]
+['32.0', '32.0', '32.0', '>64.0', '>64.0', '>64.0', '64.0', '32.0', '16.0', '16.0', '16.0', '16.0']
+
+The code here is similar to previous examples, except that we are not passing an image path on initialisation of :class:`aigarmic.Plate`. Instead, we are reading the image (using ``opencv``) and splitting (using :func:`aigarmic.process_plate_image.split_by_grid`) into small images. The key point here is that we then overwrite the attribute ``image_matrix`` of the :class:`aigarmic.Plate` object with the split images. From this point onwards, the code is the same as before.
+
+To use a different splitting function, simply replace the call to :func:`aigarmic.process_plate_image.split_by_grid` with a custom function. The function must have a return type of ``list[list[ndarray]]``, i.e., a 2D matrix of images read using ``opencv``.
