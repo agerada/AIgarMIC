@@ -28,5 +28,5 @@ jobs:
     - name: Test with pytest
       run: |
         curl -kO https://datacat.liverpool.ac.uk/2631/2/aigarmic_assets.zip
-        unzip aigarmic_assets.zip
+        unzip -f aigarmic_assets.zip
         pytest
