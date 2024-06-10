@@ -26,7 +26,9 @@ jobs:
         pip install pytest-cov
         pip install -e ./ 
     - name: Test with pytest
+      uses: milliewalky/setup-7-zip@v1
       run: |
+        apt-get install 
         curl -kO https://datacat.liverpool.ac.uk/2631/2/aigarmic_assets.zip
-        unzip -f aigarmic_assets.zip
+        7z x aigarmic_assets.zip -aoa
         pytest
