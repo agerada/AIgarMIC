@@ -76,7 +76,7 @@ def plates_images_paths():
 def plates_list(plates_images_paths):
     return [Plate(DRUG_NAME,
                   get_concentration_from_path(i),
-                  image_path=i,
+                  image=i,
                   visualise_contours=False,
                   n_row=8,
                   n_col=12) for i in plates_images_paths]
