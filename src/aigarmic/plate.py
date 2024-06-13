@@ -82,6 +82,12 @@ class Plate:
             self.image_matrix = split_by_grid(self.image, self.n_row, visualise_contours=visualise_contours,
                                               plate_name=self.drug + '_' + str(self.concentration))
 
+            if self.growth_code_matrix is not None:
+                warn("Growth code matrix provided along with image. Image will be saved but not used for annotations.")
+
+            if self.model is not None:
+                self.annotate_images()
+
     def add_growth_code_matrix(self, growth_code_matrix: list[list[int]]) -> None:
         if not self.valid_growth_code_matrix(growth_code_matrix):
             raise ValueError("Invalid growth code matrix, please provide a 2D growth coe matrix (list), values"
