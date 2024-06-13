@@ -688,7 +688,7 @@ def plate_set_from_dir(path: Union[str, Path],
     image_paths = get_image_paths(path)
     plates = [Plate(drug,
                     concentration=get_concentration_from_path(i),
-                    image_path=i,
+                    image=i,
                     model=model,
                     n_row=n_row,
                     n_col=n_col,
