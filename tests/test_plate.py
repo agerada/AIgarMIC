@@ -35,6 +35,34 @@ def test_annotate_images(plates_list, binary_nested_model_from_file):
 
 
 @pytest.mark.assets_required
+def test_implicit_annotate_images(plates_images_paths, binary_nested_model_from_file):
+    # providing an image path and model should automatically annotate the image
+    plate = Plate(drug=DRUG_NAME,
+                  concentration=MIN_CONCENTRATION,
+                  image=plates_images_paths[0],
+                  n_row=8,
+                  n_col=12,
+                  model=binary_nested_model_from_file)
+    assert plate.image_matrix is not None
+    for row in plate.image_matrix:
+        for item in row:
+            assert isinstance(item, np.ndarray)
+
+    assert plate.growth_code_matrix is not None
+    for row in plate.growth_code_matrix:
+        for item in row:
+            assert isinstance(item, int)
+
+    # omitting the model should not annotate the image
+    plate = Plate(drug=DRUG_NAME,
+                  concentration=MIN_CONCENTRATION,
+                  n_row=8,
+                  n_col=12,
+                  image=plates_images_paths[0])
+    assert plate.growth_code_matrix is None
+
+
+@pytest.mark.assets_required
 def test_plate_set(binary_nested_model_from_file, target_mic_spectrum):
     plate_set = plate_set_from_dir(path=path.join(MIC_PLATES_PATH, DRUG_NAME),
                                    drug=DRUG_NAME,
