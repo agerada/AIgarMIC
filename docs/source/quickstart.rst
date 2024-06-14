@@ -101,14 +101,15 @@ Then, run the following command to calculate MICs for the provided example datas
 .. code-block:: bash
 
     cd path/to/optional_assets
-    AIgarMIC -m models/spectrum_2024/growth_no_growth/ models/spectrum_2024/good_growth_poor_growth/ -t binary -n 0,1 -d 160 160 -o output/results.csv images/antimicrobials/amikacin
+    AIgarMIC -m models/spectrum_2024/growth_no_growth/ models/spectrum_2024/good_growth_poor_growth/ -t binary -n 0,1 -r 160 160 -d 8 12 -o output/results.csv images/antimicrobials/amikacin
 
 Where,
 
         - ``-m``: the path to the models to be used. We are using a two-step model, therefore provide two paths.
         - ``-t``: the type of model to be used. In this case, we are using binary models.
         - ``-n``: the growth codes that should be counted as negative growth. The models described in the manuscript annotate images with the following codes: 0 (no growth), 1 (good growth), 2 (poor growth). In this case, we are considering no growth (0) and good growth (1) as negative growth.
-        - ``-d``: the dimensions of the images. In this case, the images are 160x160 pixels.
+        - ``-r``: the resolution of the colony images. In this case, the images are 160x160 pixels (the default).
+        - ``-d``: the dimensions of the agar grid. In this case, the grid is 8x12 (the default), giving 96 total colonies per agar plate image.
         - ``-o``: the output file where the results will be saved.
         - ``images/antimicrobials/amikacin``: the path to the images to be analysed (the only positional argument)
 

@@ -44,8 +44,10 @@ def main_parser():
     parser.add_argument("-s", "--softmax_classes", type=int,
                         help="Number of softmax classes for softmax classes that model predicts."
                              "Required if -t = softmax")
-    parser.add_argument("-d", "--dimensions", type=int, nargs=2, default=[160, 160],
-                        help="X and Y dimensions of images for model training [default = 160 160]")
+    parser.add_argument("-r", "--resolution", type=int, nargs=2, default=[160, 160],
+                        help="X and Y resolution of images for model training [default = 160 160]")
+    parser.add_argument("-d", "--dimensions", type=int, nargs=2, default=[8, 12],
+                        help="Number of rows and columns in agar plate image grid [default = 8 12]")
     return parser
 
 
@@ -53,8 +55,11 @@ def main():
     parser = main_parser()
     args = parser.parse_args()
 
-    model_image_x = args.dimensions[0]
-    model_image_y = args.dimensions[1]
+    model_image_x = args.resolution[0]
+    model_image_y = args.resolution[1]
+    plate_n_row = args.dimensions[0]
+    plate_n_col = args.dimensions[1]
+
     supported_model_types = ['softmax', 'binary']
 
     plate_images_paths = get_paths_from_directory(args.directory)
@@ -134,7 +139,9 @@ def main():
     for abx, paths in plate_images_paths.items():
         _plate_set = plate_set_from_dir(path=parent_path / abx,
                                         drug=abx,
-                                        model=model)
+                                        model=model,
+                                        n_row=plate_n_row,
+                                        n_col=plate_n_col)
         abx_superset[abx] = _plate_set
 
     for abx, plate_set in abx_superset.items():
