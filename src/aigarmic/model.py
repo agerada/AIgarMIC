@@ -53,16 +53,15 @@ class KerasModel(Model):
         """
         self.path = path
         self.keras_data = tf.keras.models.load_model(path)  # pylint: disable=no-member
-        if key:
-            self.key = key
-        else:
+
+        if key is None:
             # infer key from final output layer of loaded model
             final_layer = self.keras_data.layers[-1]
             inferred_key = [str(i) for i in range(final_layer.output.shape[1])]
-            self.key = inferred_key
+            key = inferred_key
         self.trained_x = trained_x
         self.trained_y = trained_y
-        super().__init__(key)
+        super().__init__(key=key)
 
     def load_model(self, path: str) -> None:
         """
@@ -141,7 +140,7 @@ class BinaryModel(KerasModel):
         return output
 
 
-class BinaryNestedModel:
+class BinaryNestedModel(Model):
     def __init__(self, first_line_model: BinaryModel,
                  second_line_model: BinaryModel,
                  first_model_accuracy_acceptance: float = 0.9,
@@ -164,7 +163,7 @@ class BinaryNestedModel:
 
         _key = self.second_line_model.get_key()
         _key.insert(0, self.first_line_model.get_key()[0])
-        self.key = _key
+        super().__init__(key=_key)
 
     def predict(self, image: np.ndarray) -> dict:
         """
@@ -188,11 +187,3 @@ class BinaryNestedModel:
             second_line_classification['growth'] = self.second_line_model.get_key()[
                 second_line_classification['growth_code']]
             return second_line_classification
-
-    def get_key(self) -> list[str]:
-        """
-        Return key to convert model output to human-readable label
-        
-        :return: key (list of strings)
-        """
-        return self.key
