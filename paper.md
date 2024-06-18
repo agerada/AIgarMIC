@@ -42,10 +42,12 @@ Minimum inhibitory concentration (MIC) is a laboratory test used to estimate  th
 
 Antimicrobial susceptibility testing (AST) is required to ensure timely and appropriate antimicrobial therapy worldwide. AST is also used to quantify the incidence and prevalence of antimicrobial resistance in hospitals, regions and countries. Agar dilution is a standard AST method -- it has the advantage of being relatively inexpensive, and enables high throughput. However, the implementation of agar dilution is often limited by the time required to interpret plates, a process that is also subject to significant intra- and inter-observer variability.
 
-The aim of `AIgarMIC` is to standardise and automate the interpretation of agar dilution plates. Typical users of `AIgarMIC` are likely to include: 
+The aim of `AIgarMIC` is to standardise and automate the interpretation of agar dilution plates. \autoref{caption} illustrates the integration of ``AIgarMIC`` within the laboratory workflow for agar dilution MIC measurement. Typical users of `AIgarMIC` are likely to include: 
 
 * Laboratories that are currently performing agar dilution MIC testing, but wish to automate and standardise the interpretation of their results,
 * Laboratories that have a need for moderate--high throughput MIC testing, but do not have access to other automated assays and systems.  
+
+![High-level overview of the integration of ``AIgarMIC`` within the laboratory pathway of minimum inhibitory concentration measurement using agar dilution. ``AIgarMIC`` performs the interpretative steps of the pathway (from step 5), taking a set of agar plates with a colony-locating grid as an input, and reporting an MIC for each isolate.\label{fig:overview}](paper_images/overview.pdf)
 
 # Related resources
 
