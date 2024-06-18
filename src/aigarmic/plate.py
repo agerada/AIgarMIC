@@ -617,8 +617,7 @@ class PlateSet:
     def review_poor_images(self, threshold: float = .9,
                            save_dir: Optional[str] = None) -> list[list[tuple[int, int]]]:
         """
-        Review and re-classify images with prediction accuracy below threshold. Currently, only supports three levels,
-        0 (no growth), 1 (poor growth), 2 (good growth), as described in Gerada et al. (2024), Microbiology Spectrum.
+        Review and re-classify images with prediction accuracy below threshold. Currently, supports up to 0--9 classes.
         If save_dir provided then colony images will also be saved to a subdirectory (named after the new
         classification), to allow for future use in training.
 
