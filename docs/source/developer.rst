@@ -30,6 +30,35 @@ The suite requires the optional assets to be present in the root directory. Test
 
 Although this will not test the full functionality of ``AIgarMIC``, it can be useful for quickly testing that the installation succeeded.
 
+Test coverage
+-------------
+
+`pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`_ is recommended for measuring tes coverage. Checking coverage for ``AIgarMIC`` requires use of `coverage <https://coverage.readthedocs.io/en/coverage.html>`_. Since some tests require the running of subprocesses (to test the CLI), ``coverage`` must be configured to monitor subprocesses. To run a test coverage report, navigate to the project root directory and run:
+
+.. code-block:: bash
+
+    export COVERAGE_PROCESS_START=$(pwd)/.coveragerc
+    export PYTHONPATH=$(pwd)
+
+    coverage run -m pytest --cov=aigarmic
+
+To generate an HTML report of the coverage, run:
+
+.. code-block:: bash
+
+    coverage html
+
+.. note::
+    It may be necessary to use the error ignore flag (``-i``) to ignore errors depending on local configuration.
+
+Now open the ``htmlcov/index.html`` file in a browser to view the coverage report.
+
+.. warning::
+    Use of ``coverage combine`` is not currently supported, therefore note that command line scripts (such as ``main``) are covered separately in the report.
+
+.. note::
+    As a minimum, >60% test coverage in the core parts of ``AIgarMIC`` is required for a contribution. The core parts are in: ``file_handlers.py``, ``model.py``, ``plate.py``, and ``process_plate_image.py``.
+
 Build process
 -------------
 
