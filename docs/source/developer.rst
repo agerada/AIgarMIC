@@ -42,6 +42,9 @@ Test coverage
 
     coverage run -m pytest --cov=aigarmic
 
+.. note::
+    Test coverage will import ``AIgarMIC`` from the current environment, therefore make sure to install the version you are testing. Scripts, such as ``main``, are executed from the current path.
+
 To generate an HTML report of the coverage, run:
 
 .. code-block:: bash
