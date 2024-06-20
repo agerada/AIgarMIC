@@ -27,20 +27,12 @@ def test_main(tmp_path):
     assert result.returncode == 0
     assert (d / "output.csv").exists()
 
-    target = {}
-    with open(TARGET_MIC_CSV, "r", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            target[row["Position"]] = row["MIC"]
-
+    # check that output.csv contains the expected columns
     with open(d / "output.csv", "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            print(row)
             assert row['Antibiotic'] == DRUG_NAME
             assert "MIC" in row
             assert "Position" in row
             assert "QC" in row
             assert row["QC"] in ["P", "F", "W"]
-
-            #assert row["MIC"] == target[row["Position"]]
