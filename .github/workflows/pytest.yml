@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
 jobs:
   build:
 
@@ -30,3 +35,11 @@ jobs:
         curl -kO https://datacat.liverpool.ac.uk/2631/2/aigarmic_assets.zip
         7z x aigarmic_assets.zip -aoa
         pytest
+    - name: Build coverage file
+      run: |
+        pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=aigarmic tests/ | tee pytest-coverage.txt
+    - name: Pytest coverage comment
+      uses: MishaKav/pytest-coverage-comment@main
+      with:
+        pytest-coverage-path: ./pytest-coverage.txt
+        junitxml-path: ./pytest.xml
