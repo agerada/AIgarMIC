@@ -6,6 +6,7 @@ import pytest
 
 @pytest.mark.assets_required
 def test_find_threshold_value(plates_images_paths, growth_image):
+    # successfully find a valid threshold that gives 96 small images
     for i in plates_images_paths:
         image = cv2.imread(i)
         blur = cv2.GaussianBlur(image, (25, 25), 0)
@@ -25,4 +26,6 @@ def test_split_by_grid(plates_images_paths):
         image = cv2.imread(i)
         split_images = split_by_grid(image, visualise_contours=False)
         assert len(split_images) == 8
+
+        # check that each row has 12 columns (inferred from rows)
         assert len(split_images[0]) == 12

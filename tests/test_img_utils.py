@@ -8,8 +8,10 @@ import cv2  # pylint: disable=import-error
 def test_delete_file(tmp_path):
     temp_file = tmp_path / "test_image.jpg"
     assert not path.exists(temp_file)
+
     shutil.copy(COLONY_IMAGE_PATH, temp_file)
     assert path.exists(temp_file)
+
     d = Deleter(confirm=False)
     d.delete_file(temp_file)
     assert not path.exists(temp_file)
