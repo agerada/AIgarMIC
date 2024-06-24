@@ -50,14 +50,17 @@ def find_threshold_value(image: ndarray, start: int = 20,
     return None
 
 
-def split_by_grid(image: ndarray, n_rows: int = 8,
+def split_by_grid(image: ndarray,
+                  n_rows: int = 8,
+                  n_cols: int = 12,
                   visualise_contours: bool = False,
                   plate_name: Optional[str] = None) -> list[list[ndarray]]:
     """
     Split an agar plate image into individual colony sub-images using a grid overlay.
 
     :param image: image file loaded using cv2.imread
-    :param n_rows: number of rows in the grid (columns will be inferred automatically)
+    :param n_rows: number of rows in the grid
+    :param n_cols: number of columns in the grid
     :param visualise_contours: if True, display the contours found (useful for validation)
     :param plate_name: name of plate to display in visualisation (useful for validation)
     :return: matrix of sub-images
@@ -66,7 +69,7 @@ def split_by_grid(image: ndarray, n_rows: int = 8,
         raise ValueError("Pass plate name to split_by_grid if using visualise_contours")
     blur = cv2.GaussianBlur(image, (25, 25), 0)  # pylint: disable=no-member
     gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)  # pylint: disable=no-member
-    grid_contours, _ = find_threshold_value(gray)
+    grid_contours, _ = find_threshold_value(gray, look_for=n_rows * n_cols)
 
     if visualise_contours:
         _image = image

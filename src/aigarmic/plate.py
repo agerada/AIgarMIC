@@ -79,7 +79,10 @@ class Plate:
             if isinstance(self.image, str):
                 self.image = cv2.imread(self.image)  # pylint: disable=no-member
 
-            self.image_matrix = split_by_grid(self.image, self.n_row, visualise_contours=visualise_contours,
+            self.image_matrix = split_by_grid(image=self.image,
+                                              n_rows=self.n_row,
+                                              n_cols=self.n_col,
+                                              visualise_contours=visualise_contours,
                                               plate_name=self.drug + '_' + str(self.concentration))
 
             if self.growth_code_matrix is not None:
@@ -143,7 +146,9 @@ class Plate:
 
         :param visualise_contours: Visualise the contours of the plate (useful for validation of grid splitting)
         """
-        self.image_matrix = split_by_grid(self.image, self.n_row,
+        self.image_matrix = split_by_grid(image=self.image,
+                                          n_rows=self.n_row,
+                                          n_cols=self.n_col,
                                           visualise_contours=visualise_contours,
                                           plate_name=self.drug + '_' + str(self.concentration))
 
