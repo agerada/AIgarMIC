@@ -24,7 +24,7 @@ Now we will use :func:`aigarmic.get_paths_from_directory` to get the paths of im
 >>> antibiotic = "amikacin"
 >>> model = MeanModel(key=['no growth', 'growth'])
 >>> paths = get_paths_from_directory("../images/antimicrobials/")
->>> plates = [Plate(antibiotic, get_concentration_from_path(path), model=model, image_path=path, n_row=8, n_col=12) for path in paths[antibiotic]]
+>>> plates = [Plate(antibiotic, get_concentration_from_path(path), model=model, image=path, n_row=8, n_col=12) for path in paths[antibiotic]]
 
 Note also that we provided an (optional) key to ``MeanModel`` on construction, to help with the interpretation of the growth code. The next step involves annotating the images, i.e., converting from images to growth matrices. This step will utilise the linked ``MeanModel`` for each plate:
 

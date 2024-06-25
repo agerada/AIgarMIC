@@ -74,9 +74,13 @@ def plates_images_paths():
 
 @pytest.fixture
 def plates_list(plates_images_paths):
+    """
+    Creates a list of Plate objects for testing.
+    :return: List of Plate objects
+    """
     return [Plate(DRUG_NAME,
                   get_concentration_from_path(i),
-                  image_path=i,
+                  image=i,
                   visualise_contours=False,
                   n_row=8,
                   n_col=12) for i in plates_images_paths]
@@ -116,6 +120,10 @@ def basic_plates():
 
 @pytest.fixture
 def binary_model_trained():
+    """
+    Train a binary model for testing.
+    :return: output is same as train.train_binary
+    """
     return train_binary(annotations_path=TRAIN_ANNOTATIONS_PATH,
                         model_design=model_design_spectrum_2024_binary_first_step(IMAGE_WIDTH, IMAGE_HEIGHT),
                         val_split=0.2,
@@ -127,6 +135,10 @@ def binary_model_trained():
 
 @pytest.fixture
 def target_mic_spectrum():
+    """
+    Load "true" MIC values to compare against, as determined in the Spectrum paper.
+    :return: Dictionary of Position: MIC
+    """
     target = {}
     with open(TARGET_MIC_CSV, "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
