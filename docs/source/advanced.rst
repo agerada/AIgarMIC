@@ -55,7 +55,7 @@ A key step in calculating MICs using ``AIgarMIC`` is the splitting of agar plate
 >>> plates = [Plate(antibiotic, get_concentration_from_path(path), model=model, n_row=8, n_col=12) for path in paths[antibiotic]]
 >>> for plate, path in zip(plates, paths[antibiotic]):
 ...     image = cv2.imread(path)
-...     plate.image_matrix = split_by_grid(image, n_rows=8)
+...     plate.image_matrix = split_by_grid(image, n_rows=8, n_cols=12)
 >>> for i in plates:
 ...     _ = i.annotate_images()  # explicit call needed
 >>> plate_set = PlateSet(plates_list=plates)

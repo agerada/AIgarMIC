@@ -697,7 +697,5 @@ def plate_set_from_dir(path: Union[str, Path],
                     n_row=n_row,
                     n_col=n_col,
                     **kwargs) for i in image_paths]
-    for i in plates:
-        i.annotate_images()
     output = PlateSet(plates)
     return output

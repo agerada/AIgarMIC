@@ -12,19 +12,20 @@ from typing import Optional
 from numpy import ndarray, empty
 
 
-def find_threshold_value(image: ndarray, start: int = 20,
+def find_threshold_value(image: ndarray,
+                         look_for: int,
+                         start: int = 20,
                          end: int = 100,
                          by: int = 1,
-                         look_for: int = 96,
                          area_lower_bound: int = 1000) -> Optional[tuple[list, int]]:
     """
     Find threshold value that correctly splits an agar plate image into colony sub-images. Assumes that a black grid
     overlays the image.
     :param image: Image file loaded using cv2.imread
+    :param look_for: target sub-images
     :param start: starting threshold value
     :param end: ending threshold value
     :param by: threshold increment value
-    :param look_for: target sub-images
     :param area_lower_bound: minimum area for a contour to be considered
     :return: tuple of contours and threshold value
     """
@@ -51,8 +52,8 @@ def find_threshold_value(image: ndarray, start: int = 20,
 
 
 def split_by_grid(image: ndarray,
-                  n_rows: int = 8,
-                  n_cols: int = 12,
+                  n_rows: int,
+                  n_cols: int,
                   visualise_contours: bool = False,
                   plate_name: Optional[str] = None) -> list[list[ndarray]]:
     """
