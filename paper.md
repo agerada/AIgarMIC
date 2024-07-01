@@ -47,7 +47,7 @@ From an input of agar plate images generated through agar dilution (usually cons
 `AIgarMIC` can be used through a collection of [command-line scripts](https://aigarmic.readthedocs.io/en/latest/command_line_interface.html); knowledge of Python scripting is not necessary. Given a collection of images from one or more agar dilution experiments, `AIgarMIC` can calculate the MIC from a single script:
 
 ```bash
-    AIgarMIC -m path_to_model/ -t binary -n 0 -d 8 12 -r 160 160 -o output/results.csv path_to_images/
+    AIgarMIC -m model/ -t binary -n 0 -d 8 12 -r 160 160 -o results.csv images/
 ```
 
 Where, 
