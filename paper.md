@@ -44,7 +44,21 @@ From an input of agar plate images generated through agar dilution (usually cons
 
 # Software design
 
-`AIgarMIC` can be used through a collection of [command-line scripts](https://aigarmic.readthedocs.io/en/latest/command_line_interface.html); knowledge of Python scripting is not necessary. `AIgarMIC` is designed to be extensible through a traditional Python package. The core functionality is provided through the [`Plate`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.Plate) and [`PlateSet`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.PlateSet) classes (see \autoref{fig:api_plate} for user-interface API). A [`PlateSet`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.PlateSet) instance is in essence a collection of [`Plate`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.Plate) instances, where each [`Plate`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.Plate) corresponds to an agar plate with a particular antimicrobial concentration. A minimal example is shown below, consisting of 4 strains tested over 3 dilutions/plates (+ one positive control plate):
+`AIgarMIC` can be used through a collection of [command-line scripts](https://aigarmic.readthedocs.io/en/latest/command_line_interface.html); knowledge of Python scripting is not necessary. Given a collection of images from one or more agar dilution experiments, `AIgarMIC` can calculate the MIC from a single script:
+
+```bash
+    AIgarMIC -m path_to_model/ -t binary -n 0 -d 8 12 -r 160 160 -o output/results.csv path_to_images/
+```
+
+Where, 
+- `-m`, `--model` specifies the path to the pre-trained model,
+- `-t`, `--type_model` specifies the type of model (binary or softmax),
+- `-n`, `--negative_codes` specifies the growth code/s that should be classed as no growth,
+- `-d`, `-dimensions` specifies the dimensions of the agar plate images (8 rows and 12 columns above),
+- `-r`, `--resolution` specifies the resolution of the images (x and y) on which the model was trained,
+- `-o`, `--output_file` specifies the target `.csv` output file
+
+`AIgarMIC` is designed to be extensible through a traditional Python package. The core functionality is provided through the [`Plate`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.Plate) and [`PlateSet`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.PlateSet) classes (see \autoref{fig:api_plate} for user-interface API). A [`PlateSet`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.PlateSet) instance is in essence a collection of [`Plate`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.Plate) instances, where each [`Plate`](https://aigarmic.readthedocs.io/en/latest/autoapi/aigarmic/plate/index.html#aigarmic.plate.Plate) corresponds to an agar plate with a particular antimicrobial concentration. A minimal example is shown below, consisting of 4 strains tested over 3 dilutions/plates (+ one positive control plate):
 
 ```python
 from aigarmic.plate import Plate, PlateSet
