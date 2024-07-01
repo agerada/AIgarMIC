@@ -51,6 +51,7 @@ From an input of agar plate images generated through agar dilution (usually cons
 ```
 
 Where, 
+
 - `-m`, `--model` specifies the path to the pre-trained model,
 - `-t`, `--type_model` specifies the type of model (binary or softmax),
 - `-n`, `--negative_codes` specifies the growth code/s that should be classed as no growth,
