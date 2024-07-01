@@ -49,10 +49,13 @@ From an input of agar plate images generated through agar dilution (usually cons
 ```python
 from aigarmic.plate import Plate, PlateSet
 
+# set up 4 plates of ciprofloxacin (including a positive control plate)
 antibiotic = ["ciprofloxacin"] * 4
 plate_concentrations = [0, 0.125, 0.25, 0.5]
-plate_growth_matrices = []
 
+# temporary list of growth codes for each plate
+# each plate has 2x2 inoculated strains
+plate_growth_matrices = []
 plate_growth_matrices.append([[1, 1],
                               [0, 1]])
 plate_growth_matrices.append([[1, 1],
@@ -62,6 +65,7 @@ plate_growth_matrices.append([[1, 0],
 plate_growth_matrices.append([[1, 0],
                               [0, 0]])
 
+# combine data into Plate instances
 plates = []
 for ab, conc, growth in zip(antibiotic,
                             plate_concentrations,
@@ -70,8 +74,14 @@ for ab, conc, growth in zip(antibiotic,
                         concentration=conc,
                         growth_code_matrix=growth))
 
+# create PlateSet instance using list of Plates
 plate_set = PlateSet(plates_list=plates)
-plate_set.calculate_mic(no_growth_key_items = tuple([0]))
+
+plate_set.calculate_mic(
+    no_growth_key_items = tuple([0]) # growth codes that indicate no growth
+)
+plate_set.mic_matrix.tolist()
+# [[1.0, 0.25], [0.125, 0.125]]
 
 # convert to traditional MIC values:
 plate_set.convert_mic_matrix(mic_format='string').tolist()
