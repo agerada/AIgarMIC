@@ -62,7 +62,7 @@ To cite the validation data and developmental approach described in the `AIgarMI
 ## External links
 
 The manuscript describing the validation of `AIgarMIC` can be found at: https://doi.org/10.1128/spectrum.04209-23.
-Optional asset data is available at: https://10.17638/datacat.liverpool.ac.uk/2631.
+Optional asset data is available at: https://doi.org/10.17638/datacat.liverpool.ac.uk%2F2631.
 
 ## Contributing
 
