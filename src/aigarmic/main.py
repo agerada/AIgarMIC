@@ -71,6 +71,8 @@ def main():
                 _image = cv2.imread(path)  # pylint: disable=no-member
                 try:
                     split_by_grid(_image,
+                                  n_rows=plate_n_row,
+                                  n_cols=plate_n_col,
                                   visualise_contours=True,
                                   plate_name=abx + '_' + str(get_concentration_from_path(path)))
                 except ValueError as e:
@@ -136,6 +138,7 @@ def main():
 
     abx_superset = {}
     parent_path = pathlib.Path(args.directory)
+
     for abx, paths in plate_images_paths.items():
         _plate_set = plate_set_from_dir(path=parent_path / abx,
                                         drug=abx,
