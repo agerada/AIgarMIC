@@ -36,7 +36,7 @@ bibliography: paper.bib
 
 # Summary
 
-Minimum inhibitory concentration (MIC) assays are used to estimate the susceptibility of a microorganism to an antibiotic. The result is broadly used within microbiology. In clinical settings it is used to determine whether it is possible to use that same drug to treat a patient's infection. Agar dilution is a reference method for MIC testing. However, the interpretation of agar dilution plates is time-consuming and prone to intra- and inter-operational error when read by laboratory personnel. `AIgarMIC` is a Python package for automated interpretation of agar dilution images. 
+Minimum inhibitory concentration (MIC) assays are used to estimate the susceptibility of a microorganism to an antibiotic. The result is broadly used within microbiology. In clinical settings, it is used to determine whether it is possible to use that same drug to treat a patient's infection. Agar dilution is a reference method for MIC testing. However, the interpretation of agar dilution plates is time-consuming and prone to intra- and inter-operational errors when read by laboratory personnel. `AIgarMIC` is a Python package for automated interpretation of agar dilution images. 
 
 ![High-level overview of the integration of `AIgarMIC` within the laboratory pathway of minimum inhibitory concentration measurement using agar dilution. `AIgarMIC` performs the interpretative steps of the pathway (from step 5), taking a set of agar plates with a colony-locating grid as an input, and reporting an MIC for each isolate. In this example, 4x4 strains are inoculated onto agar plates, giving a total of 16 strains. F = quality control failed (no growth in positive control plate).\label{fig:overview}](paper_images/overview.pdf)
 
@@ -122,18 +122,18 @@ Further examples and tutorials can be found in the [documentation](https://aigar
 
 # Statement of need
 
-Antimicrobial susceptibility testing (AST) is required to ensure timely and appropriate antimicrobial therapy worldwide. Susceptibility testing is also used to quantify the incidence and prevalence of antimicrobial resistance in hospitals, regions and countries. Agar dilution is a standard AST method -- it has the advantage of being relatively inexpensive, and enables high throughput. However, since most agar dilution experiments are interpreted by visually inspecting agar plates of microbial growth, the implementation of agar dilution is often limited by this time-consuming step. Visual inspection is also subject to human error, and the inherent subjectivity of classifying colony growth can lead to significant intra- and inter-observer variability.
+Antimicrobial susceptibility testing (AST) is required to ensure timely and appropriate antimicrobial therapy worldwide. Susceptibility testing is also used to quantify the incidence and prevalence of antimicrobial resistance in hospitals, regions and countries. Agar dilution is a standard AST method -- it has the advantage of being relatively inexpensive and enables high throughput. However, since most agar dilution experiments are interpreted by visually inspecting agar plates of microbial growth, the implementation of agar dilution is often limited by this time-consuming step. Visual inspection is also subject to human error, and the inherent subjectivity of classifying colony growth can lead to significant intra- and inter-observer variability.
 
 The aim of `AIgarMIC` is to standardise and automate the interpretation of agar dilution plates, reducing the impact of human error on results. Furthermore, since the performance of `AIgarMIC` is fixed to a particular model, MIC results are not subject to operator variability. Hence, MIC results can be more reliably compared between experiments and laboratories. \autoref{fig:overview} illustrates the integration of `AIgarMIC` within the laboratory workflow for agar dilution MIC measurement. Typical users of `AIgarMIC` are likely to include: 
 
 * Laboratories that are currently performing agar dilution MIC testing, but wish to automate and standardise the interpretation of their results,
-* Laboratories that have a need for moderate--high throughput MIC testing, but do not have access to other automated assays and systems.  
+* Laboratories that need moderate--high throughput MIC testing, but do not have access to other automated assays and systems.  
 
 # Related resources
 
 Users of `AIgarMIC` may also be interested in the following related resources and software:
 
-* Laboratory protocols for agar dilution MIC testing, such as those published by the European Committee on Antimicrobial Susceptibility Testing (EUCAST) [@eucastDeterminationMinimumInhibitory2000] or by Wiegand et al [@wiegandAgarBrothDilution2008]. 
+* Laboratory protocols for agar dilution MIC testing, such as those published by the European Committee on Antimicrobial Susceptibility Testing (EUCAST) [@eucastDeterminationMinimumInhibitory2000] or by Wiegand et al. [@wiegandAgarBrothDilution2008]. 
 * Software such as [`cellprofiler`](https://cellprofiler.org/) as a general biological image analysis tool that can be used for tasks beyond the scope of `AIgarMIC` [@lamprechtCellProfilerFreeVersatile2007].
 
 # Laboratory validation
