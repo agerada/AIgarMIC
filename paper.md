@@ -1,5 +1,5 @@
 ---
-title: 'AIgarMIC: a Python package for automated interpretation of agar dilution minimum inhibitory concentration testing'
+title: 'AIgarMIC: a Python package for automated interpretation of agar dilution minimum inhibitory concentration assays'
 tags:
   - Python
   - microbiology
@@ -36,7 +36,7 @@ bibliography: paper.bib
 
 # Summary
 
-Minimum inhibitory concentration (MIC) assays are used to estimate the susceptibility of a microorganism to an antibiotic. The result is broadly used within microbiology. In clinical settings, it is used to determine whether it is possible to use that same drug to treat a patient's infection. Agar dilution is a reference method for MIC testing. However, the interpretation of agar dilution plates is time-consuming and prone to intra- and inter-operational errors when read by laboratory personnel. `AIgarMIC` is a Python package for automated interpretation of agar dilution images. 
+Minimum inhibitory concentration (MIC) assays are used to estimate the susceptibility of a microorganism to an antibiotic. The result is broadly used within microbiology. In clinical settings, it is used to determine whether it is possible to use that same drug to treat a patient's infection. Agar dilution is a reference method for MIC measurement. However, the interpretation of agar dilution plates is time-consuming and prone to intra- and inter-operational errors when read by laboratory personnel. `AIgarMIC` is a Python package for automated interpretation of agar dilution images. 
 
 ![High-level overview of the integration of `AIgarMIC` within the laboratory pathway of minimum inhibitory concentration measurement using agar dilution. `AIgarMIC` performs the interpretative steps of the pathway (from step 5), taking a set of agar plates with a colony-locating grid as an input, and reporting an MIC for each isolate. In this example, 4x4 strains are inoculated onto agar plates, giving a total of 16 strains. F = quality control failed (no growth in positive control plate).\label{fig:overview}](paper_images/overview.pdf)
 
@@ -133,7 +133,7 @@ The aim of `AIgarMIC` is to standardise and automate the interpretation of agar 
 
 Users of `AIgarMIC` may also be interested in the following related resources and software:
 
-* Laboratory protocols for agar dilution MIC testing, such as those published by the European Committee on Antimicrobial Susceptibility Testing (EUCAST) [@eucastDeterminationMinimumInhibitory2000] or by Wiegand et al. [@wiegandAgarBrothDilution2008]. 
+* Laboratory protocols for agar dilution MIC assays, such as those published by the European Committee on Antimicrobial Susceptibility Testing (EUCAST) [@eucastDeterminationMinimumInhibitory2000] or by Wiegand et al. [@wiegandAgarBrothDilution2008]. 
 * Software such as [`cellprofiler`](https://cellprofiler.org/) as a general biological image analysis tool that can be used for tasks beyond the scope of `AIgarMIC` [@lamprechtCellProfilerFreeVersatile2007].
 
 # Laboratory validation
