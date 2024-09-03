@@ -30,6 +30,38 @@ The suite requires the optional assets to be present in the root directory. Test
 
 Although this will not test the full functionality of ``AIgarMIC``, it can be useful for quickly testing that the installation succeeded.
 
+Test coverage
+-------------
+
+`pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`_ is recommended for measuring tes coverage. Checking coverage for ``AIgarMIC`` requires use of `coverage <https://coverage.readthedocs.io/en/coverage.html>`_. Since some tests require the running of subprocesses (to test the CLI), ``coverage`` must be configured to monitor subprocesses. To run a test coverage report, navigate to the project root directory and run:
+
+.. code-block:: bash
+
+    export COVERAGE_PROCESS_START=$(pwd)/.coveragerc
+    export PYTHONPATH=$(pwd)
+
+    coverage run -m pytest --cov=aigarmic
+
+.. note::
+    Test coverage will import ``AIgarMIC`` from the current environment, therefore make sure to install the version you are testing. Scripts, such as ``main``, are executed from the current path.
+
+To generate an HTML report of the coverage, run:
+
+.. code-block:: bash
+
+    coverage html
+
+.. note::
+    It may be necessary to use the error ignore flag (``-i``) to ignore errors depending on local configuration.
+
+Now open the ``htmlcov/index.html`` file in a browser to view the coverage report.
+
+.. warning::
+    Use of ``coverage combine`` is not currently supported, therefore note that command line scripts (such as ``main``) are covered separately in the report.
+
+.. note::
+    As a minimum, >60% test coverage in the core parts of ``AIgarMIC`` is required for a contribution. The core parts are in: ``file_handlers.py``, ``model.py``, ``plate.py``, and ``process_plate_image.py``.
+
 Build process
 -------------
 
@@ -57,12 +89,12 @@ Errors related to ``cv2`` and ``tensorflow`` import can be ignored.
     make doctest
     make html
 
-4. Update dependencies in ``requirements.txt`` by running:
+4. Update dependencies in ``requirements.txt`` by running (suggest use ``pip-chill`` rather than ``pip freeze`` to avoid clashes in dependencies):
 
 .. code-block:: bash
 
-    pip freeze > requirements.txt
-    pip freeze > docs/source/requirements.txt
+    pip-chill > requirements.txt
+    pip-chill > docs/source/requirements.txt
 
 If developing using macOS, change the following line:
 
@@ -71,6 +103,7 @@ If developing using macOS, change the following line:
 to:
 
 ``tensorflow==2.15.0; sys_platform != 'darwin' or platform_machine != 'arm64'``
+
 ``tensorflow-macos==2.15.0; sys_platform == 'darwin' and platform_machine == 'arm64'``
 
 This allows platform-agnostic use.

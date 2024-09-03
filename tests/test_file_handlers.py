@@ -22,6 +22,7 @@ def test_create_dataset_from_directory():
                                                batch_size=32)
     assert isinstance(train, tf.data.Dataset)
 
+    # check that each item is an image-like object
     total_train = 0
     for i in train.unbatch():
         assert i[0].shape == (160, 160, 3)
@@ -31,7 +32,10 @@ def test_create_dataset_from_directory():
         assert i[0].shape == (160, 160, 3)
         total_val += 1
 
+    # check all images loaded correctly
     assert total_train + total_val == len(no_growth_images) + len(growth_images)
+
+    # check split ratio is correct
     assert total_val / (total_train + total_val) == pytest.approx(0.2, 0.05)
 
 
@@ -66,6 +70,8 @@ def test_save_training_log(binary_model_trained, tmp_path):
 
     with open(d / "test_dataset_log.csv", "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
+
+        # reload and check that values are reasonable
         for row in reader:
             assert float(row['loss']) >= 0
             assert float(row['accuracy']) >= 0

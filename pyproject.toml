@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aigarmic"
-version = "1.0.0"
+version = "1.1.1"
 description = "Machine-learning assisted agar dilution MIC"
 authors = ["Alessandro Gerada"]
 license = "GPL-3.0"
@@ -21,8 +21,8 @@ matplotlib = ">=3.6"
 numpy = ">=1.26"
 opencv-python = ">=4.9"
 pytest = ">=8.1"
-tensorflow-macos = { version = ">=2.11,<=2.15", markers = "platform_system=='Darwin' and platform_machine=='arm64'"}
-tensorflow = { version = ">=2.11,<=2.15", markers = "platform_system!='Darwin' and platform_machine!='arm64'"}
+tensorflow-macos = { version = "2.15", markers = "platform_system=='Darwin' and platform_machine=='arm64'"}
+tensorflow = { version = "2.15", markers = "platform_system!='Darwin' and platform_machine!='arm64' or platform_system=='Darwin' and platform_machine!='arm64'"}
 scikit-learn = ">=1.4"
 sphinx = ">=7.2"
 sphinx-argparse = "^0.4.0"
@@ -34,6 +34,7 @@ pytest-cov = ">=5.0.0"
 myst-nb = {version = ">=1.0.0", python = ">=3.9"}
 sphinx-autoapi = ">=3.0.0"
 sphinx-rtd-theme = ">=2.0.0"
+coverage = ">=7.5.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

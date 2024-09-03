@@ -14,13 +14,17 @@ import pytest
 
 @pytest.mark.assets_required
 def test_plates(plates_list):
+    # check plates correctly instantialised from images
     assert [isinstance(i, Plate) for i in plates_list]
     assert [i.drug == DRUG_NAME for i in plates_list]
 
+    # check that plates sorted correctly (by concentration)
+    # indirectly checks implementation of dunder methods such as __lt__
     sorted_plates = sorted(plates_list)
     assert sorted_plates[0].concentration == MIN_CONCENTRATION
     assert sorted_plates[-1].concentration == MAX_CONCENTRATION
 
+    # can fetch a random colony image
     temp_image, code = plates_list[0].get_colony_image()
     assert isinstance(temp_image, np.ndarray)
     assert isinstance(code, str)
@@ -28,10 +32,39 @@ def test_plates(plates_list):
 
 @pytest.mark.assets_required
 def test_annotate_images(plates_list, binary_nested_model_from_file):
+    # checks that an agar plate image is correctly annotated
     [single_plate] = [i for i in plates_list if i.concentration == MIN_CONCENTRATION]
     single_plate.annotate_images(model=binary_nested_model_from_file)
     assert single_plate.growth_code_matrix[1][0] == 2
     assert single_plate.growth_code_matrix[0][1] == 2
+
+
+@pytest.mark.assets_required
+def test_implicit_annotate_images(plates_images_paths, binary_nested_model_from_file):
+    # providing an image path and model should automatically annotate the image
+    plate = Plate(drug=DRUG_NAME,
+                  concentration=MIN_CONCENTRATION,
+                  image=plates_images_paths[0],
+                  n_row=8,
+                  n_col=12,
+                  model=binary_nested_model_from_file)
+    assert plate.image_matrix is not None
+    for row in plate.image_matrix:
+        for item in row:
+            assert isinstance(item, np.ndarray)
+
+    assert plate.growth_code_matrix is not None
+    for row in plate.growth_code_matrix:
+        for item in row:
+            assert isinstance(item, int)
+
+    # omitting the model should not annotate the image
+    plate = Plate(drug=DRUG_NAME,
+                  concentration=MIN_CONCENTRATION,
+                  n_row=8,
+                  n_col=12,
+                  image=plates_images_paths[0])
+    assert plate.growth_code_matrix is None
 
 
 @pytest.mark.assets_required
@@ -185,6 +218,7 @@ def test_get_colony_image(plates_list):
                                  "i", str(i[0]),
                                  "j", str(i[1])])
 
+    # out of bounds check
     with pytest.raises(IndexError):
         single_plate.get_colony_image((12, 14))
 
@@ -199,6 +233,7 @@ def test_plate_with_growth_code():
     assert test_plate.growth_code_matrix[0][1] == 2
     assert test_plate.growth_code_matrix[1][0] == 1
 
+    # invalid matrix dimensions raises error
     with pytest.raises(ValueError):
         test_plate.add_growth_code_matrix([[0, 2],
                                            [1, 0],

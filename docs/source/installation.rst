@@ -4,7 +4,7 @@ Installation
 System requirements
 -------------------
 
-``AIgarMIC`` has been developed on macOS Sonoma. It has been tested on linux (Ubuntu) and Windows 11. ARM versions of Windows are unsupported due to ``tensorflow`` incompatibility.
+``AIgarMIC`` has been developed on macOS Sonoma. It has been tested on linux (Ubuntu), Intel Mac, and Windows 11. ARM versions of Windows are unsupported due to ``tensorflow`` incompatibility.
 
 Environment setup
 -----------------

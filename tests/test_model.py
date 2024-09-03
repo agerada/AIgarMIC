@@ -4,6 +4,7 @@ import pytest
 
 @pytest.mark.assets_required
 class TestBinaryModel:
+    # Pre-trained model (from Spectrum paper)
     def test_predict(self, first_line_model_from_file, growth_image, no_growth_image):
         output_prediction = first_line_model_from_file.predict(growth_image)
         assert output_prediction['growth'] == "Growth"
@@ -22,6 +23,7 @@ class TestBinaryModel:
 
 @pytest.mark.assets_required
 class TestBinaryNestedModel:
+    # combination of two pre-trained models (from Spectrum paper)
     def test_predict(self, binary_nested_model_from_file,
                      growth_image,
                      no_growth_image,

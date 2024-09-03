@@ -22,7 +22,7 @@ from warnings import warn
 class Plate:
     def __init__(self, drug: str,
                  concentration: float,
-                 image_path: Optional[str] = None,
+                 image: Optional[Union[str, cv2.typing.MatLike]] = None,
                  n_row: Optional[int] = None,
                  n_col: Optional[int] = None,
                  growth_code_matrix: Optional[list[list[int]]] = None,
@@ -34,7 +34,7 @@ class Plate:
 
         :param drug: Antibiotic name
         :param concentration: Antibiotic concentration
-        :param image_path: Path to the image
+        :param image: CV2 image array or the path to the image
         :param n_row: Number of rows in the plate
         :param n_col: Number of columns in the plate
         :param visualise_contours: Visualise the contours of the plate (useful for validation of grid splitting)
@@ -43,18 +43,12 @@ class Plate:
         """
         self.drug = drug
         self.concentration = concentration
-        self.image_path = image_path
-
-        if image_path is not None:
-            if n_row is None or n_col is None:
-                raise ValueError("Plate dimensions must be provided if image path is provided")
+        self.image = image
         self.n_row = n_row
         self.n_col = n_col
-
         self.accuracy_matrix = None
         self.model = model
         self.key = None
-
         if key is not None:
             if self.model is not None and self.model.get_key() != key:
                 warn(f"Key provided to Plate does not match linked model key: {key} vs {self.model.get_key()}")
@@ -71,19 +65,31 @@ class Plate:
             self.add_growth_code_matrix(growth_code_matrix)
         else:
             self.growth_code_matrix = None
-
         self.growth_matrix = None
         self.score_matrix = None
         self.predictions_matrix = None
         self.image_matrix = None
-        self.image = None
         self.model_image_x = None
         self.model_image_y = None
-        
-        if self.image_path: 
-            self.image = cv2.imread(self.image_path)  # pylint: disable=no-member
-            self.image_matrix = split_by_grid(self.image, self.n_row, visualise_contours=visualise_contours,
+
+        if self.image is not None:
+            if n_row is None or n_col is None:
+                raise ValueError("Plate dimensions must be provided if image path is provided")
+
+            if isinstance(self.image, str):
+                self.image = cv2.imread(self.image)  # pylint: disable=no-member
+
+            self.image_matrix = split_by_grid(image=self.image,
+                                              n_rows=self.n_row,
+                                              n_cols=self.n_col,
+                                              visualise_contours=visualise_contours,
                                               plate_name=self.drug + '_' + str(self.concentration))
+
+            if self.growth_code_matrix is not None:
+                warn("Growth code matrix provided along with image. Image will be saved but not used for annotations.")
+
+            if self.model is not None:
+                self.annotate_images()
 
     def add_growth_code_matrix(self, growth_code_matrix: list[list[int]]) -> None:
         if not self.valid_growth_code_matrix(growth_code_matrix):
@@ -140,7 +146,9 @@ class Plate:
 
         :param visualise_contours: Visualise the contours of the plate (useful for validation of grid splitting)
         """
-        self.image_matrix = split_by_grid(self.image, self.n_row,
+        self.image_matrix = split_by_grid(image=self.image,
+                                          n_rows=self.n_row,
+                                          n_cols=self.n_col,
                                           visualise_contours=visualise_contours,
                                           plate_name=self.drug + '_' + str(self.concentration))
 
@@ -229,8 +237,8 @@ class Plate:
                 Unable to find an image_matrix associated with this plate. 
                 Please provide an image path on construction or use import_image and split_images()
                 """)
-        model = self.model if not model else model 
-        if not model: 
+        model = self.model if not model else model
+        if not model:
             raise LookupError(
                 """
                 Unable to find an image model for predictions associated with this plate. 
@@ -247,8 +255,8 @@ class Plate:
         temp_growth_rows = []
         temp_growth_code_rows = []
         temp_accuracy_row = []
-        for row in self.image_matrix: 
-            for image in row: 
+        for row in self.image_matrix:
+            for image in row:
                 prediction_data = model.predict(image)
                 if 'growth_code' not in prediction_data:
                     raise ValueError("Model predictions dict must contain 'growth_code'")
@@ -280,11 +288,11 @@ class Plate:
         """
         Print growth matrix in human-readable format
         """
-        if not self.growth_matrix: 
+        if not self.growth_matrix:
             print(f"Plate {self.drug} - {self.concentration} not annotated")
-        else: 
-            for row in self.growth_matrix: 
-                for result in row: 
+        else:
+            for row in self.growth_matrix:
+                for result in row:
                     print(str(result), sep="", end="")
                     print(" ", end="", sep="")
                 print()
@@ -298,10 +306,10 @@ class Plate:
         output = set()
         for i, row in enumerate(self.accuracy_matrix):
             for j, item in enumerate(row):
-                if item < threshold: 
+                if item < threshold:
                     output.add((i, j))
         return output
-    
+
     def review_poor_images(self, threshold: float = .9,
                            save_dir: str = None) -> list[tuple[int, int]]:
         """
@@ -325,7 +333,7 @@ class Plate:
         codes.update(skip_codes)
         codes.update(stop_codes)
 
-        inaccurate_images_indexes = self.get_inaccurate_images(threshold) 
+        inaccurate_images_indexes = self.get_inaccurate_images(threshold)
         changed_log = []
         for image_index in inaccurate_images_indexes:
             image, stamp = self.get_colony_image(image_index)
@@ -337,7 +345,7 @@ class Plate:
                   f"with an accuracy of {accuracy * 100:.2f}")
             cv2.imshow(self.drug + str(self.concentration) + f" position {i} {j}", image)  # pylint: disable=no-member
             print("Press enter to continue, or enter new classification: ")
-            while True: 
+            while True:
                 input_key = cv2.waitKey()  # pylint: disable=no-member
                 if input_key not in codes:
                     print("Input not recognised, please try again..")
@@ -425,7 +433,7 @@ class Plate:
         return hash((self.drug, self.concentration))
 
 
-class PlateSet: 
+class PlateSet:
     def __init__(self, plates_list: list[Plate],
                  key: Optional[list[str]] = None) -> None:
         """
@@ -475,7 +483,7 @@ class PlateSet:
         self.antibiotic_plates = sorted(self.antibiotic_plates)
 
         # check dimensions of plates' matrices
-        if not self.valid_dimensions(): 
+        if not self.valid_dimensions():
             raise ValueError("Plate matrices have different dimensions - unable to calculate MIC")
 
     def valid_dimensions(self) -> bool:
@@ -500,7 +508,7 @@ class PlateSet:
         :return: List of Plate objects
         """
         return sorted(self.antibiotic_plates + [self.positive_control_plate])
-    
+
     def convert_mic_matrix(self, mic_format: str = "string") -> np.array:
         """
         Converts format of MIC matrix
@@ -519,11 +527,11 @@ class PlateSet:
             min_mic_plate = min([i.concentration for i in self.antibiotic_plates])
             for i, row in enumerate(output):
                 for j, mic in enumerate(row):
-                    if float(mic) > max_mic_plate: 
+                    if float(mic) > max_mic_plate:
                         output[i][j] = ">" + str(max_mic_plate)
-                    elif float(mic) == min_mic_plate: 
+                    elif float(mic) == min_mic_plate:
                         output[i][j] = "<" + str(min_mic_plate)
-                    else: 
+                    else:
                         output[i][j] = mic
         return output
 
@@ -537,9 +545,9 @@ class PlateSet:
         """
         self.no_growth_key_items = no_growth_key_items
         self.antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
-        max_concentration = max([i.concentration for i in self.antibiotic_plates])*2
+        max_concentration = max([i.concentration for i in self.antibiotic_plates]) * 2
         mic_matrix = np.array(self.antibiotic_plates[0].growth_code_matrix)
-        mic_matrix = np.full(mic_matrix.shape, max([i.concentration for i in self.antibiotic_plates])*2)
+        mic_matrix = np.full(mic_matrix.shape, max([i.concentration for i in self.antibiotic_plates]) * 2)
         rows = range(mic_matrix.shape[0])
         cols = range(mic_matrix.shape[1])
 
@@ -553,7 +561,7 @@ class PlateSet:
                 else:
                     c = plate.concentration
             return c
-            
+
         for row in rows:
             for col in cols:
                 mic_matrix[row][col] = get_first_negative_concentration(max_concentration, row, col)
@@ -588,12 +596,12 @@ class PlateSet:
 
         def simplify_codes(code):
             return 0 if code in self.no_growth_key_items else 1
-        
+
         antibiotic_plates = sorted(self.antibiotic_plates, reverse=True)
-        if len(antibiotic_plates) > 1: 
+        if len(antibiotic_plates) > 1:
             rows = range(qc_matrix.shape[0])
             cols = range(qc_matrix.shape[1])
-            for i in rows: 
+            for i in rows:
                 for j in cols:
                     if qc_matrix[i][j] == "F":
                         continue
@@ -614,8 +622,7 @@ class PlateSet:
     def review_poor_images(self, threshold: float = .9,
                            save_dir: Optional[str] = None) -> list[list[tuple[int, int]]]:
         """
-        Review and re-classify images with prediction accuracy below threshold. Currently, only supports three levels,
-        0 (no growth), 1 (poor growth), 2 (good growth), as described in Gerada et al. (2024), Microbiology Spectrum.
+        Review and re-classify images with prediction accuracy below threshold. Currently, supports up to 0--9 classes.
         If save_dir provided then colony images will also be saved to a subdirectory (named after the new
         classification), to allow for future use in training.
 
@@ -654,12 +661,12 @@ class PlateSet:
         output = []
         for i in range(len(row_letters)):
             for j in range(len(col_nums)):
-                position = row_letters[i]+str(col_nums[j])
+                position = row_letters[i] + str(col_nums[j])
                 mic = mic_matrix_str[i][j]
                 qc = self.qc_matrix[i][j]
                 output.append({'Antibiotic': self.drug, 'Position': position, 'MIC': mic, 'QC': qc})
         return output
-        
+
     def __repr__(self) -> str:
         return (f"PlateSet of {self.drug} with {len(self.antibiotic_plates)} "
                 f"concentrations: {[i.concentration for i in self.antibiotic_plates]}")
@@ -685,12 +692,10 @@ def plate_set_from_dir(path: Union[str, Path],
     image_paths = get_image_paths(path)
     plates = [Plate(drug,
                     concentration=get_concentration_from_path(i),
-                    image_path=i,
+                    image=i,
                     model=model,
                     n_row=n_row,
                     n_col=n_col,
                     **kwargs) for i in image_paths]
-    for i in plates:
-        i.annotate_images()
     output = PlateSet(plates)
     return output
