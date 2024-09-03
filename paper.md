@@ -93,8 +93,8 @@ for ab, conc, growth in zip(antibiotic,
 plate_set = PlateSet(plates_list=plates)
 
 plate_set.calculate_mic(
-    no_growth_key_items = tuple([0]) # growth codes that indicate no growth
-)
+    no_growth_key_items = tuple([0])) # growth codes that indicate no growth
+
 plate_set.mic_matrix.tolist()
 # [[1.0, 0.25], [0.125, 0.125]]
 
