@@ -1,5 +1,8 @@
 # `AIgarMIC`
 
+Markdown:
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.06826/status.svg)](https://doi.org/10.21105/joss.06826)
+
 ## Introduction
 
 `AIgarMIC` is a Python package and collection of commandline scripts designed to facilitate the automation of agar dilution minimum inhibitory concentration image interpretation.
