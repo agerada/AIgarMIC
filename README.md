@@ -42,7 +42,24 @@ University of Liverpool, UK (alessandro.gerada@liverpool.ac.uk).
 
 ## Cite
 
-If you are using `AIgarMIC` in your research project, please cite [TO FOLLOW].
+If you are using `AIgarMIC` in your research project, please cite:
+
+    @article{geradaAIgarMICPythonPackage2024,
+      title = {{{AIgarMIC}}: A {{Python}} Package for Automated Interpretationof Agar Dilution Minimum Inhibitory Concentration Assays},
+      shorttitle = {{{AIgarMIC}}},
+      author = {Gerada, Alessandro and Harper, Nicholas and Howard, Alex and Hope, William},
+      year = {2024},
+      month = sep,
+      journal = {Journal of Open Source Software},
+      volume = {9},
+      number = {101},
+      pages = {6826},
+      issn = {2475-9066},
+      doi = {10.21105/joss.06826},
+      urldate = {2024-10-07},
+      copyright = {http://creativecommons.org/licenses/by/4.0/},
+      file = {/Users/agerada/Library/Mobile Documents/com~apple~CloudDocs/Zotero/Journal Article/Gerada et al_2024_AIgarMIC.pdf}
+    }
 
 To cite the validation data and developmental approach described in the `AIgarMIC` validation manuscript, please cite:
 
